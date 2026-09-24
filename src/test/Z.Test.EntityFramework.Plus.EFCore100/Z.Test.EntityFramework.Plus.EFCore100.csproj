@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup Label="Globals">
+    <SccProjectName></SccProjectName>
+    <SccProvider></SccProvider>
+    <SccAuxPath></SccAuxPath>
+    <SccLocalPath></SccLocalPath>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>TRACE;DEBUG;RELEASE;NETCOREAPP2_0; EFCORE; FULL EFCORE_3X EFCORE_5X EFCORE_6X EFCORE_7X EFCORE_8X EFCORE_9X EFCORE_10X IsCore7</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DefineConstants>TRACE;RELEASE;NETCOREAPP2_0; EFCORE; FULL EFCORE_3X EFCORE_5X EFCORE_6X EFCORE_7X EFCORE_8X EFCORE_9X EFCORE_10X IsCore7</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.3" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.3" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="MSTest.TestAdapter" Version="3.8.3" />
+    <PackageReference Include="MSTest.TestFramework" Version="3.8.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Z.EntityFramework.Plus.EFCore10x.NET10\Z.EntityFramework.Plus.EFCore10x.NET10.csproj" />
+  </ItemGroup>
+
+  <Import Project="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\Z.Test.EntityFramework.Plus.EFCore.Shared.projitems" Label="Shared" />
+
+  <Import Project="..\Z.Test.EntityFramework.Plus.Test.Shared\Z.Test.EntityFramework.Plus.Test.Shared.projitems" Label="Shared" />
+
+  <ItemGroup>
+    <!-- Batch Update/Delete are not part of the MIT build: their tests, and the repro files that call Z.EntityFramework.Extensions directly, are excluded. -->
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchDelete\**" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchUpdate\**" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\MikaelAreaIndependant\IncludeFilter_694.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\MikaelAreaIndependant\QueryCache.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\MikaelAreaIndependant\Autre.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\MikaelAreaIndependant\UpdateFromQueryDic.cs" />
+    <!-- The EFCore90 project's own QueryIncludeOptimized tests, compiled from where they live rather than copied. -->
+    <Compile Include="..\Z.Test.EntityFramework.Plus.EFCore90\QueryIncludeOptimized\**\*.cs" />
+  </ItemGroup>
+
+</Project>
