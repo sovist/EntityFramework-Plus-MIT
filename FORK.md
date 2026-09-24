@@ -264,7 +264,7 @@ installed by `Potatoqualitee/mssqlsuite` (upstream's suite needs `localhost` + W
 - **`publish.yml`** — on a pushed tag `mit/<version>` (or `workflow_dispatch` with a version): build,
   test, pack as `<version>`, push to nuget.org. The version must equal the csproj `<Version>` or be a
   prerelease of it (`10.105.8.1-preview.1`), which keeps the "package version = upstream tag" rule
-  mechanical. `--skip-duplicate` makes re-runs idempotent.
+  mechanical. A 409 fails the run: nuget.org uses it both for "version already exists" and for "package ID is reserved", and `--skip-duplicate` would report either as success. Re-running an already published version therefore fails with a clear message, which is the right outcome.
 
   Authentication is nuget.org **Trusted Publishing**: a policy on the package owner's nuget.org account
   bound to repository `sovist/EntityFramework-Plus-MIT`, workflow file `publish.yml`, scope "push new

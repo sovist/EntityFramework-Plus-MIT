@@ -81,4 +81,4 @@ jobs:
           user: oleksandr.semeniuk
 
       - name: Push
-        run: dotnet nuget push artifacts/EntityFrameworkPlus.EFCore.MIT.${{ env.VERSION }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ steps.nuget-login.outputs.NUGET_API_KEY }} --skip-duplicate
+        run: dotnet nuget push artifacts/EntityFrameworkPlus.EFCore.MIT.${{ env.VERSION }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
