@@ -31,6 +31,7 @@
     <RepositoryUrl>https://github.com/sovist/EntityFramework-Plus-MIT</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>EntityFramework;EntityFrameworkCore;EFCore;EF;Plus;QueryFuture;Future;QueryDeferred;QueryCache;QueryFilter;Audit;MIT</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <!-- Upstream shared code. Same list as the 9x project minus BatchDelete, BatchUpdate and QueryHook, which are facades over Z.EntityFramework.Extensions. -->
@@ -55,6 +56,7 @@
 
   <ItemGroup>
     <None Include="..\..\LICENSE" Pack="true" PackagePath="\" />
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>
