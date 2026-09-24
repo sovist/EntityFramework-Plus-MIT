@@ -1,0 +1,62 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    MIT build of Entity Framework Plus for EF Core 10, without the proprietary
+    Z.EntityFramework.Extensions.EFCore and Z.Expressions.Eval dependencies.
+    Mirrors Z.EntityFramework.Plus.EFCore9x.NET8.csproj.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>EntityFramework.Plus.EFCore.MIT</AssemblyName>
+    <RootNamespace>Z.EntityFramework.Plus</RootNamespace>
+    <SignAssembly>False</SignAssembly>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- CS1591: upstream code is not fully XML-documented. EF1001: upstream reflects EF Core internals by design. -->
+    <NoWarn>$(NoWarn);CS1591;EF1001</NoWarn>
+    <!-- Same symbol set upstream compiles the 9x project with, plus EFCORE_10X (already used by upstream guards). -->
+    <DefineConstants>$(DefineConstants);RELEASE;NETSTANDARD;NETSTANDARD2_0;NETSTANDARD2_1;EFCORE;NET45;FULL;EFCORE_3X;EFCORE_5X;EFCORE_6X;EFCORE_7X;EFCORE_8X;EFCORE_9X;EFCORE_10X</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Package">
+    <PackageId>EntityFramework.Plus.EFCore.MIT</PackageId>
+    <!-- The upstream tag this build is made from. -->
+    <Version>10.105.8.1</Version>
+    <Authors>ZZZ Projects Inc.;Oleksandr Semeniuk</Authors>
+    <Product>EntityFramework.Plus.EFCore.MIT</Product>
+    <Copyright>Copyright © ZZZ Projects Inc.</Copyright>
+    <Description>MIT build of Entity Framework Plus for EF Core 10 without the proprietary Z.EntityFramework.Extensions and Z.Expressions.Eval dependencies. Includes Query Future, Query Deferred, Query Cache, Query Filter, Audit, Query IncludeFilter and Query IncludeOptimized. Batch Update/Delete are not included because they require Z.EntityFramework.Extensions; use EF Core's ExecuteUpdate/ExecuteDelete instead. Not affiliated with ZZZ Projects.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/sovist/EntityFramework-Plus-MIT</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/sovist/EntityFramework-Plus-MIT</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>EntityFramework;EntityFrameworkCore;EFCore;EF;Plus;QueryFuture;Future;QueryDeferred;QueryCache;QueryFilter;Audit;MIT</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <!-- Upstream shared code. Same list as the 9x project minus BatchDelete, BatchUpdate and QueryHook, which are facades over Z.EntityFramework.Extensions. -->
+  <Import Project="..\shared\Z.EF.Plus._Core.Shared\Z.EF.Plus._Core.Shared.projitems" Label="Shared" />
+  <Import Project="..\shared\Z.EF.Plus._ExceptionMessage.Shared\Z.EF.Plus._ExceptionMessage.Shared.projitems" Label="Shared" />
+  <Import Project="..\shared\Z.EF.Plus.Audit.Shared\Z.EF.Plus.Audit.Shared.projitems" Label="Shared" />
+  <Import Project="..\shared\Z.EF.Plus.QueryCache.Shared\Z.EF.Plus.QueryCache.Shared.projitems" Label="Shared" />
+  <Import Project="..\shared\Z.EF.Plus.QueryDeferred.Shared\Z.EF.Plus.QueryDeferred.Shared.projitems" Label="Shared" />
+  <Import Project="..\shared\Z.EF.Plus.QueryExtensions.Shared\Z.EF.Plus.QueryExtensions.Shared.projitems" Label="Shared" />
+  <Import Project="..\shared\Z.EF.Plus.QueryFilter.Shared\Z.EF.Plus.QueryFilter.Shared.projitems" Label="Shared" />
+  <Import Project="..\shared\Z.EF.Plus.QueryFuture.Shared\Z.EF.Plus.QueryFuture.Shared.projitems" Label="Shared" />
+  <Import Project="..\shared\Z.EF.Plus.QueryIncludeFilterCore.Shared\Z.EF.Plus.QueryIncludeFilterCore.Shared.projitems" Label="Shared" />
+  <Import Project="..\shared\Z.EF.Plus.QueryIncludeOptimized.Shared\Z.EF.Plus.QueryIncludeOptimized.Shared.projitems" Label="Shared" />
+  <Import Project="..\shared\Z.EF.Plus.SetDynamic.Shared\Z.EF.Plus.SetDynamic.Shared.projitems" Label="Shared" />
+  <Import Project="..\shared\Z.EF.Plus.SetIdentity.Shared\Z.EF.Plus.SetIdentity.Shared.projitems" Label="Shared" />
+
+  <!-- Shim\*.cs (the replacement for the paid-assembly surface) is picked up by the SDK's default globbing. -->
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\LICENSE" Pack="true" PackagePath="\" />
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>
