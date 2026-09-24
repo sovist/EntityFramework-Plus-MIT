@@ -184,7 +184,7 @@ src/
     Z.Test.EntityFramework.Plus.EFCore100/          # upstream's shared test suite against this build — mirrors EFCore90
     EntityFramework.Plus.EFCore.MIT.Smoke/          # fork-owned xunit smoke test
 FORK.md                                             # this file
-README.md                                           # to be replaced on master-MIT; also the nuget.org readme (open decision)
+README.md                                           # the fork's readme; packed as the nuget.org readme too
 ```
 
 The library csproj mirrors `Z.EntityFramework.Plus.EFCore9x.NET8.csproj` with these differences:
@@ -305,13 +305,14 @@ against ours and prefer theirs.
   still behave; the smoke test proves the one thing upstream's suite cannot (single round trip, and
   scalar futures under buffering).
 
+- **README replaced.** Upstream's `README.md` was marketing for ZZZ Projects' products (including the
+  dependency this fork removes); ours describes the package and is also packed as `PackageReadmeFile`.
+  If an upstream merge conflicts on it, take ours.
+
 Open:
 
-1. **README strategy.** Replace upstream's 59-line marketing `README.md` on `master-MIT` (merge
-   conflicts on it are trivial: take ours) and use the same file as `PackageReadmeFile`, or keep a
-   separate file. *Recommendation: replace.*
-2. **nuget.org co-owner** for the package, so it does not depend on one account.
-3. **Additional targets** (EF Core 8/9): not in the first release.
+1. **nuget.org co-owner** for the package, so it does not depend on one account.
+2. **Additional targets** (EF Core 8/9): not in the first release.
 
 ## History
 
