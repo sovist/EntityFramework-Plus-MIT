@@ -87,7 +87,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Z.EntityFramework.Plus.EFCo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Z.Test.EntityFramework.Plus.EFCore100", "test\Z.Test.EntityFramework.Plus.EFCore100\Z.Test.EntityFramework.Plus.EFCore100.csproj", "{E05FECB0-4B8F-46BD-B9BE-DA07FAABEF87}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EntityFramework.Plus.EFCore.MIT.Smoke", "test\EntityFramework.Plus.EFCore.MIT.Smoke\EntityFramework.Plus.EFCore.MIT.Smoke.csproj", "{958551B0-2B7C-4FB4-8E84-EE63754B555E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EntityFrameworkPlus.EFCore.MIT.Smoke", "test\EntityFrameworkPlus.EFCore.MIT.Smoke\EntityFrameworkPlus.EFCore.MIT.Smoke.csproj", "{958551B0-2B7C-4FB4-8E84-EE63754B555E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

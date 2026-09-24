@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Z.EntityFramework.Plus;
 
-namespace EntityFramework.Plus.EFCore.MIT.Smoke;
+namespace EntityFrameworkPlus.EFCore.MIT.Smoke;
 
 /// <summary>
 /// On the InMemory provider Query Future detects the provider (through the shim's <c>GetQueryContextFactory</c>)

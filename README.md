@@ -1,8 +1,8 @@
-# EntityFramework.Plus.EFCore.MIT
+# EntityFrameworkPlus.EFCore.MIT
 
 [![build](https://img.shields.io/github/actions/workflow/status/sovist/EntityFramework-Plus-MIT/build.yml?branch=master-MIT&style=flat-square&logo=github)](https://github.com/sovist/EntityFramework-Plus-MIT/actions/workflows/build.yml)
-[![nuget](https://img.shields.io/nuget/vpre/EntityFramework.Plus.EFCore.MIT?logo=nuget&style=flat-square)](https://www.nuget.org/packages/EntityFramework.Plus.EFCore.MIT)
-[![downloads](https://img.shields.io/nuget/dt/EntityFramework.Plus.EFCore.MIT?logo=nuget&style=flat-square)](https://www.nuget.org/packages/EntityFramework.Plus.EFCore.MIT)
+[![nuget](https://img.shields.io/nuget/vpre/EntityFrameworkPlus.EFCore.MIT?logo=nuget&style=flat-square)](https://www.nuget.org/packages/EntityFrameworkPlus.EFCore.MIT)
+[![downloads](https://img.shields.io/nuget/dt/EntityFrameworkPlus.EFCore.MIT?logo=nuget&style=flat-square)](https://www.nuget.org/packages/EntityFrameworkPlus.EFCore.MIT)
 [![license](https://img.shields.io/github/license/sovist/EntityFramework-Plus-MIT?style=flat-square)](https://github.com/sovist/EntityFramework-Plus-MIT/blob/master-MIT/LICENSE)
 
 An MIT build of [Entity Framework Plus](https://github.com/zzzprojects/EntityFramework-Plus) for EF Core 10
@@ -18,7 +18,7 @@ This project is not affiliated with or endorsed by ZZZ Projects.
 ## Install
 
 ```
-dotnet add package EntityFramework.Plus.EFCore.MIT
+dotnet add package EntityFrameworkPlus.EFCore.MIT
 ```
 
 Coming from `Z.EntityFramework.Plus.EFCore`: change the package reference and nothing else — the namespaces

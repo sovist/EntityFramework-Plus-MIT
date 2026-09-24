@@ -4,7 +4,7 @@
     "projects": [
       "Z.EntityFramework.Plus.EFCore10x.NET10\\Z.EntityFramework.Plus.EFCore10x.NET10.csproj",
       "test\\Z.Test.EntityFramework.Plus.EFCore100\\Z.Test.EntityFramework.Plus.EFCore100.csproj",
-      "test\\EntityFramework.Plus.EFCore.MIT.Smoke\\EntityFramework.Plus.EFCore.MIT.Smoke.csproj"
+      "test\\EntityFrameworkPlus.EFCore.MIT.Smoke\\EntityFrameworkPlus.EFCore.MIT.Smoke.csproj"
     ]
   }
 }
