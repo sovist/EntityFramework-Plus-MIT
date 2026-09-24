@@ -167,6 +167,9 @@ Recorded 2026-09-24, when the shim was written.
 ## Project layout
 
 ```
+.github/workflows/
+  build.yml                                         # build + test + pack on every push/PR
+  publish.yml                                       # tag mit/<version> → nuget.org
 src/
   Z.EntityFramework.Plus.sln                        # upstream's solution + the three fork projects (see ground rule 1)
   EntityFramework.Plus.EFCore.MIT.slnf              # solution filter: only the fork's projects — open this one
@@ -249,7 +252,21 @@ Package check after `dotnet pack`: the nuspec's only dependency is `Microsoft.En
 `lib/net10.0/` holds `EntityFramework.Plus.EFCore.MIT.dll` + `.xml`, `LICENSE` is at the root, and the
 `<repository>` element records the upstream commit the build came from.
 
-Publish: `dotnet nuget push`, tag `mit/<version>`, push the tag.
+### CI
+
+Two GitHub Actions workflows in `.github/workflows/`, both on `windows-latest` with SQL Server 2022
+installed by `Potatoqualitee/mssqlsuite` (upstream's suite needs `localhost` + Windows authentication):
+
+- **`build.yml`** — on pushes to `master-MIT` and `features/**`, and PRs to `master-MIT`: build and test
+  through the solution filter, pack, upload the `.nupkg` as an artifact.
+- **`publish.yml`** — on a pushed tag `mit/<version>` (or `workflow_dispatch` with a version): build,
+  test, pack as `<version>`, push to nuget.org with the `NUGET_API_KEY` repository secret. The version
+  must equal the csproj `<Version>` or be a prerelease of it (`10.105.8.1-preview.1`), which keeps the
+  "package version = upstream tag" rule mechanical. `--skip-duplicate` makes re-runs idempotent.
+
+Publishing therefore is: merge to `master-MIT`, then `git tag mit/<version> && git push origin mit/<version>`.
+Publish a `-preview.N` first when the release has not yet been exercised by a real consumer; nuget.org
+versions are immutable and the four-component scheme leaves no room for a fork-only fix.
 
 ## Upstream sync runbook
 
@@ -261,8 +278,9 @@ git checkout master-MIT && git merge master          # or a features/ branch off
 Then, in order: contract-check grep → read the upstream diff for the folders we import
 (`git diff <previous-upstream-tag>..master -- src/shared/`) → build the library → run both test
 projects (a new upstream test that calls EFE directly shows up as a compile error: add it to the
-`Compile Remove` list) → pack → publish → tag. If upstream ever adds its own `EFCore10x` project, diff it
-against ours and prefer theirs.
+`Compile Remove` list) → update `<Version>` in the csproj to the new upstream tag → merge → tag
+`mit/<version>` and let CI publish. If upstream ever adds its own `EFCore10x` project, diff it against
+ours and prefer theirs.
 
 ## Versioning
 
