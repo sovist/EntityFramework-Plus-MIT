@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Z.EntityFramework.Plus;
 
-namespace EntityFramework.Plus.EFCore.MIT.Smoke;
+namespace EntityFrameworkPlus.EFCore.MIT.Smoke;
 
 public class QueryFutureSqlServerTests : IClassFixture<SqlServerFixture>
 {

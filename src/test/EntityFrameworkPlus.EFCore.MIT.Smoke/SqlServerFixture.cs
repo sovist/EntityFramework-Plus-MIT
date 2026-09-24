@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace EntityFramework.Plus.EFCore.MIT.Smoke;
+namespace EntityFrameworkPlus.EFCore.MIT.Smoke;
 
 /// <summary>
 /// Creates and seeds the smoke database once per test class. The server defaults to a local trusted

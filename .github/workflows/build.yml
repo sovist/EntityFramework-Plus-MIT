@@ -35,10 +35,10 @@ jobs:
           version: 2022
 
       - name: Build
-        run: dotnet build src/EntityFramework.Plus.EFCore.MIT.slnf --configuration Release
+        run: dotnet build src/EntityFrameworkPlus.EFCore.MIT.slnf --configuration Release
 
       - name: Test
-        run: dotnet test src/EntityFramework.Plus.EFCore.MIT.slnf --configuration Release --no-build --verbosity normal
+        run: dotnet test src/EntityFrameworkPlus.EFCore.MIT.slnf --configuration Release --no-build --verbosity normal
 
       - name: Pack
         run: dotnet pack src/Z.EntityFramework.Plus.EFCore10x.NET10/Z.EntityFramework.Plus.EFCore10x.NET10.csproj --configuration Release --no-build --output artifacts

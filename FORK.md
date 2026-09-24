@@ -1,4 +1,4 @@
-# EntityFramework.Plus.EFCore.MIT — fork notes
+# EntityFrameworkPlus.EFCore.MIT — fork notes
 
 Design and maintenance notes for this fork. `README.md` is for consumers; this file is for whoever maintains the fork.
 
@@ -172,7 +172,7 @@ Recorded 2026-09-24, when the shim was written.
   publish.yml                                       # tag mit/<version> → nuget.org
 src/
   Z.EntityFramework.Plus.sln                        # upstream's solution + the three fork projects (see ground rule 1)
-  EntityFramework.Plus.EFCore.MIT.slnf              # solution filter: only the fork's projects — open this one
+  EntityFrameworkPlus.EFCore.MIT.slnf              # solution filter: only the fork's projects — open this one
   Z.EntityFramework.Plus.EFCore10x.NET10/           # the library — mirrors EFCore9x.NET8
     Z.EntityFramework.Plus.EFCore10x.NET10.csproj
     Shim/
@@ -185,7 +185,7 @@ src/
       EntityTypeInfoExtensions.cs                   # namespace Z.EntityFramework.Plus (ToZInfo)
   test/
     Z.Test.EntityFramework.Plus.EFCore100/          # upstream's shared test suite against this build — mirrors EFCore90
-    EntityFramework.Plus.EFCore.MIT.Smoke/          # fork-owned xunit smoke test
+    EntityFrameworkPlus.EFCore.MIT.Smoke/          # fork-owned xunit smoke test
 FORK.md                                             # this file
 README.md                                           # the fork's readme; packed as the nuget.org readme too
 ```
@@ -195,7 +195,7 @@ The library csproj mirrors `Z.EntityFramework.Plus.EFCore9x.NET8.csproj` with th
 | | 9x (upstream) | 10x (`.MIT`) |
 |---|---|---|
 | `TargetFramework` | `net8.0` | `net10.0` |
-| `AssemblyName` / `RootNamespace` | `Z.EntityFramework.Plus.EFCore` | `EntityFramework.Plus.EFCore.MIT` / `Z.EntityFramework.Plus` (no `.resx` anywhere, so the change is safe) |
+| `AssemblyName` / `RootNamespace` | `Z.EntityFramework.Plus.EFCore` | `EntityFrameworkPlus.EFCore.MIT` / `Z.EntityFramework.Plus` (no `.resx` anywhere, so the change is safe) |
 | `DefineConstants` | `… EFCORE_8X EFCORE_9X` | same + `EFCORE_10X` (upstream already guards with it) |
 | `<Import>` list | 15 projitems | 12 — without `BatchDelete`, `BatchUpdate`, `QueryHook` |
 | `PackageReference` | EF Relational 9.0.0, `Z.EntityFramework.Extensions.EFCore`, `Z.Expressions.Eval` | `Microsoft.EntityFrameworkCore.Relational` 10.0.0 only |
@@ -203,8 +203,10 @@ The library csproj mirrors `Z.EntityFramework.Plus.EFCore9x.NET8.csproj` with th
 | `NoWarn` | — | `CS1591` (upstream XML docs are incomplete), `EF1001` (upstream reflects EF internals by design) |
 | `SignAssembly` | `False` | `False` (no key needed) |
 
-Package metadata (in the csproj): `PackageId` `EntityFramework.Plus.EFCore.MIT` (`Z.EntityFramework.*`
-is a reserved prefix on nuget.org); `Version` = upstream tag; `Authors` upstream + fork maintainer;
+Package metadata (in the csproj): `PackageId` `EntityFrameworkPlus.EFCore.MIT` (two prefixes are reserved on nuget.org: `Z.EntityFramework.*` by ZZZ Projects and
+`EntityFramework.*` by Microsoft — the first publish attempt, as `EntityFramework.Plus.EFCore.MIT`, was rejected
+for the latter; a 404 from the package index only proves no package exists, reservation shows only on the
+Upload page or in the push response); `Version` = upstream tag; `Authors` upstream + fork maintainer;
 `Copyright` upstream's; `PackageLicenseExpression` `MIT` with upstream's `LICENSE` packed;
 `PackageProjectUrl` / `RepositoryUrl` this repository; `Description` names what is and is not included.
 
@@ -226,12 +228,12 @@ connection string can be overridden with `EFPLUS_MIT_SMOKE_CONNECTION`.
 
 Upstream's other projects in the solution still need the paid packages — and upstream `master` does
 not even build against the EFE version its 9x project pins (`GetParameterName` arrived in EFE after
-`9.104.0.1`). So work through the solution filter `src/EntityFramework.Plus.EFCore.MIT.slnf`, which
+`9.104.0.1`). So work through the solution filter `src/EntityFrameworkPlus.EFCore.MIT.slnf`, which
 selects only the fork's three projects; open the `.slnf` in Rider or Visual Studio instead of the `.sln`.
 
 ```bash
-dotnet build src/EntityFramework.Plus.EFCore.MIT.slnf -c Release
-dotnet test  src/EntityFramework.Plus.EFCore.MIT.slnf -c Release
+dotnet build src/EntityFrameworkPlus.EFCore.MIT.slnf -c Release
+dotnet test  src/EntityFrameworkPlus.EFCore.MIT.slnf -c Release
 dotnet pack  src/Z.EntityFramework.Plus.EFCore10x.NET10 -c Release   # → src/Z.EntityFramework.Plus.EFCore10x.NET10/bin/Release/*.nupkg
 ```
 
@@ -249,7 +251,7 @@ What the two test projects prove, at `10.105.8.1` on EF Core 10.0.3:
   and the InMemory provider (non-batched path).
 
 Package check after `dotnet pack`: the nuspec's only dependency is `Microsoft.EntityFrameworkCore.Relational`,
-`lib/net10.0/` holds `EntityFramework.Plus.EFCore.MIT.dll` + `.xml`, `LICENSE` is at the root, and the
+`lib/net10.0/` holds `EntityFrameworkPlus.EFCore.MIT.dll` + `.xml`, `LICENSE` is at the root, and the
 `<repository>` element records the upstream commit the build came from.
 
 ### CI
@@ -262,11 +264,11 @@ installed by `Potatoqualitee/mssqlsuite` (upstream's suite needs `localhost` + W
 - **`publish.yml`** — on a pushed tag `mit/<version>` (or `workflow_dispatch` with a version): build,
   test, pack as `<version>`, push to nuget.org. The version must equal the csproj `<Version>` or be a
   prerelease of it (`10.105.8.1-preview.1`), which keeps the "package version = upstream tag" rule
-  mechanical. `--skip-duplicate` makes re-runs idempotent.
+  mechanical. A 409 fails the run: nuget.org uses it both for "version already exists" and for "package ID is reserved", and `--skip-duplicate` would report either as success. Re-running an already published version therefore fails with a clear message, which is the right outcome.
 
   Authentication is nuget.org **Trusted Publishing**: a policy on the package owner's nuget.org account
   bound to repository `sovist/EntityFramework-Plus-MIT`, workflow file `publish.yml`, scope "push new
-  packages and package versions", package `EntityFramework.Plus.EFCore.MIT`. The job requests an OIDC
+  packages and package versions", package `EntityFrameworkPlus.EFCore.MIT`. The job requests an OIDC
   token (`id-token: write`) and `NuGet/login` exchanges it for a short-lived API key. No secret is stored
   in the repository; if the policy is deleted, publishing stops until it is recreated.
 
@@ -319,7 +321,7 @@ ours and prefer theirs.
 
 ## Decisions
 
-- **`AssemblyName` renamed** to `EntityFramework.Plus.EFCore.MIT`: provenance visible in `bin/`, and
+- **`AssemblyName` renamed** to `EntityFrameworkPlus.EFCore.MIT`: provenance visible in `bin/`, and
   no two DLLs with the same name if both packages ever meet. Namespaces stay `Z.EntityFramework.Plus`
   because upstream code is untouched, so consumer code changes only its `PackageReference`.
 - **Shim lives in the library project** (`Shim/`, sub-folders mirror namespaces); promote to a shared
@@ -347,3 +349,7 @@ Open:
   reimplemented the compile step on EF Core's public pipeline with the enumerable-cardinality override.
   Upstream suite 219/219 and smoke 8/8 green on SQL Server 2022 + InMemory; package packs with EF Core
   Relational as its only dependency.
+- 2026-09-24 — first publish (`mit/10.105.8.1-preview.1`, as `EntityFramework.Plus.EFCore.MIT`) was
+  rejected by nuget.org: `EntityFramework.*` is a Microsoft-reserved prefix. The run still went green
+  because `--skip-duplicate` reports every 409 as "already exists". Renamed the package to
+  `EntityFrameworkPlus.EFCore.MIT`, removed `--skip-duplicate`, deleted the tag; nothing was published.

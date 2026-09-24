@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace EntityFramework.Plus.EFCore.MIT.Smoke;
+namespace EntityFrameworkPlus.EFCore.MIT.Smoke;
 
 public class Blog
 {

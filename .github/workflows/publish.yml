@@ -46,7 +46,7 @@ jobs:
             *) echo "::error::Version '$VERSION' does not match the csproj <Version> '$CSPROJ_VERSION' (the upstream tag this build is made from)."; exit 1 ;;
           esac
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
-          echo "Publishing EntityFramework.Plus.EFCore.MIT $VERSION"
+          echo "Publishing EntityFrameworkPlus.EFCore.MIT $VERSION"
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v6
@@ -60,10 +60,10 @@ jobs:
           version: 2022
 
       - name: Build
-        run: dotnet build src/EntityFramework.Plus.EFCore.MIT.slnf --configuration Release -p:Version=${{ env.VERSION }}
+        run: dotnet build src/EntityFrameworkPlus.EFCore.MIT.slnf --configuration Release -p:Version=${{ env.VERSION }}
 
       - name: Test
-        run: dotnet test src/EntityFramework.Plus.EFCore.MIT.slnf --configuration Release --no-build --verbosity normal
+        run: dotnet test src/EntityFrameworkPlus.EFCore.MIT.slnf --configuration Release --no-build --verbosity normal
 
       - name: Pack
         run: dotnet pack src/Z.EntityFramework.Plus.EFCore10x.NET10/Z.EntityFramework.Plus.EFCore10x.NET10.csproj --configuration Release --no-build -p:Version=${{ env.VERSION }} --output artifacts
@@ -81,4 +81,4 @@ jobs:
           user: oleksandr.semeniuk
 
       - name: Push
-        run: dotnet nuget push artifacts/EntityFramework.Plus.EFCore.MIT.${{ env.VERSION }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ steps.nuget-login.outputs.NUGET_API_KEY }} --skip-duplicate
+        run: dotnet nuget push artifacts/EntityFrameworkPlus.EFCore.MIT.${{ env.VERSION }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ steps.nuget-login.outputs.NUGET_API_KEY }}

@@ -1,7 +1,7 @@
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
-namespace EntityFramework.Plus.EFCore.MIT.Smoke;
+namespace EntityFrameworkPlus.EFCore.MIT.Smoke;
 
 /// <summary>Reads the server round-trip count SqlClient keeps for one open <see cref="SqlConnection"/>.</summary>
 public sealed class RoundTripCounter
