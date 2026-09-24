@@ -20,6 +20,11 @@ jobs:
   publish:
     runs-on: windows-latest
     timeout-minutes: 30
+    # Trusted Publishing: nuget.org has a policy bound to this repository and workflow file; NuGet/login
+    # exchanges the job's OIDC token for a short-lived API key, so no secret is stored anywhere.
+    permissions:
+      contents: read
+      id-token: write
 
     steps:
       - name: Checkout
@@ -69,5 +74,11 @@ jobs:
           name: nupkg-${{ env.VERSION }}
           path: artifacts/*.nupkg
 
+      - name: NuGet login
+        id: nuget-login
+        uses: NuGet/login@v1
+        with:
+          user: oleksandr.semeniuk
+
       - name: Push
-        run: dotnet nuget push artifacts/EntityFramework.Plus.EFCore.MIT.${{ env.VERSION }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }} --skip-duplicate
+        run: dotnet nuget push artifacts/EntityFramework.Plus.EFCore.MIT.${{ env.VERSION }}.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ steps.nuget-login.outputs.NUGET_API_KEY }} --skip-duplicate

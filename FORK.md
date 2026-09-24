@@ -260,9 +260,15 @@ installed by `Potatoqualitee/mssqlsuite` (upstream's suite needs `localhost` + W
 - **`build.yml`** — on pushes to `master-MIT` and `features/**`, and PRs to `master-MIT`: build and test
   through the solution filter, pack, upload the `.nupkg` as an artifact.
 - **`publish.yml`** — on a pushed tag `mit/<version>` (or `workflow_dispatch` with a version): build,
-  test, pack as `<version>`, push to nuget.org with the `NUGET_API_KEY` repository secret. The version
-  must equal the csproj `<Version>` or be a prerelease of it (`10.105.8.1-preview.1`), which keeps the
-  "package version = upstream tag" rule mechanical. `--skip-duplicate` makes re-runs idempotent.
+  test, pack as `<version>`, push to nuget.org. The version must equal the csproj `<Version>` or be a
+  prerelease of it (`10.105.8.1-preview.1`), which keeps the "package version = upstream tag" rule
+  mechanical. `--skip-duplicate` makes re-runs idempotent.
+
+  Authentication is nuget.org **Trusted Publishing**: a policy on the package owner's nuget.org account
+  bound to repository `sovist/EntityFramework-Plus-MIT`, workflow file `publish.yml`, scope "push new
+  packages and package versions", package `EntityFramework.Plus.EFCore.MIT`. The job requests an OIDC
+  token (`id-token: write`) and `NuGet/login` exchanges it for a short-lived API key. No secret is stored
+  in the repository; if the policy is deleted, publishing stops until it is recreated.
 
 Publishing therefore is: merge to `master-MIT`, then `git tag mit/<version> && git push origin mit/<version>`.
 Publish a `-preview.N` first when the release has not yet been exercised by a real consumer; nuget.org
