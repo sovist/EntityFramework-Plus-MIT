@@ -119,6 +119,10 @@ Compiled executors are cached in a size-limited `MemoryCache` keyed by EF's own
 `ICompiledQueryCacheKeyGenerator` key plus the element type. EF's `ICompiledQueryCache` cannot be
 shared: the same key would hold a scalar delegate there and an enumerable one here.
 
+EF Core 11 changed one thing on this path: `ExtractParameters` lost its `generateContextAccessors`
+parameter (fixed to `false` inside). That call is the shim's one `#if EFCORE_11X` branch; the executor
+pipeline in `release/11.0` is otherwise the same sequence of steps.
+
 ### Reflected EF Core internals
 
 | Field | Owner | Used by |
@@ -133,7 +137,7 @@ Two `[Experimental]` members are used with `EF9100` suppressed, because EF's own
 calls exactly these two: `ILiftableConstantProcessor.InlineConstants` and
 `QueryCompilationContext.SupportsPrecompiledQuery`.
 
-All fields exist in EF Core 10.0.x. A renamed field surfaces as a `TypeInitializationException`
+All fields exist in EF Core 10.0.x and 11.0 RC 1. A renamed field surfaces as a `TypeInitializationException`
 wrapping `MissingFieldException` on the first use — not at compile time. The test projects are what
 catch it on an EF Core bump.
 
@@ -231,9 +235,12 @@ reflection over public API and cached per (entity type, member type, overload).
   publish.yml                                       # tag mit/<version> → nuget.org
 src/
   Z.EntityFramework.Plus.sln                        # upstream's solution + the fork's projects (see ground rule 1)
-  EntityFrameworkPlus.EFCore.MIT.slnf              # solution filter: only the fork's buildable projects — open this one
+  EntityFrameworkPlus.EFCore.MIT.EFCore10.slnf      # solution filter per EF Core version: the library, upstream's suite and the smoke tests — open these
+  EntityFrameworkPlus.EFCore.MIT.EFCore11.slnf
   Z.EntityFramework.Plus.EFCore10x.NET10/           # the library for EF Core 10 — mirrors EFCore9x.NET8; the csproj alone
     Z.EntityFramework.Plus.EFCore10x.NET10.csproj
+  Z.EntityFramework.Plus.EFCore11x.NET11/           # the library for EF Core 11 — the 10x csproj with net11.0, EF Core 11, EFCORE_11X, version 11.x
+    Z.EntityFramework.Plus.EFCore11x.NET11.csproj
   shared/Z.EF.Plus.MIT.Shared/                      # the fork's own code, imported by every EFCore1Nx csproj like upstream's feature folders
     Z.EF.Plus.MIT.Shared.projitems                  # the file list; .shproj beside it is for the IDE
     Shim/
@@ -251,12 +258,14 @@ src/
       BatchDeleteExtensions.InMemory.cs             # InMemory fallback: read untracked, mark deleted, save through the second context
       InMemoryContext.cs                            # the second context both fallbacks save through: ContextFactory, or the context's type from its options
   test/
-    Z.Test.EntityFramework.Plus.EFCore100/          # upstream's shared test suite against this build — mirrors EFCore90
+    Z.Test.EntityFramework.Plus.EFCore100/          # upstream's shared test suite against the EF Core 10 build — mirrors EFCore90
+    Z.Test.EntityFramework.Plus.EFCore110/          # the same against the EF Core 11 build; links the EFCore100 project's DeleteFromQuery helper
     EntityFrameworkPlus.EFCore.MIT.Smoke.Shared/    # fork-owned xunit + Shouldly smoke tests, one folder per feature; .projitems + .shproj
       ShouldExtensions.cs                           # ShouldBeInOrder: sequence assertions as "these elements, in this order"
       QueryFuture/                                  # round trips on SQL Server + InMemory: QueryFutureTests.SqlServer / .InMemory and their fixtures
       Batch/                                        # Batch Update / Delete on InMemory + SQLite: one test class per extension class, one part per method
     EntityFrameworkPlus.EFCore.MIT.Smoke.EFCore100/ # the smoke tests against the EF Core 10 build: target framework, package pins, project reference
+    EntityFrameworkPlus.EFCore.MIT.Smoke.EFCore110/ # the same against the EF Core 11 build
 FORK.md                                             # this file
 README.md                                           # the fork's readme; packed as the nuget.org readme too
 ```
@@ -273,6 +282,11 @@ The library csproj mirrors `Z.EntityFramework.Plus.EFCore9x.NET8.csproj` with th
 | Fork sources | — | through the `Z.EF.Plus.MIT.Shared` import; the project folder holds only the csproj |
 | `NoWarn` | — | `CS1591` (upstream XML docs are incomplete), `EF1001` (upstream reflects EF internals by design) |
 | `SignAssembly` | `False` | `False` (no key needed) |
+
+The 11x csproj is the 10x one with `net11.0`, `Microsoft.EntityFrameworkCore.Relational` 11 (the release
+candidate until EF Core 11 ships), `EFCORE_11X` appended to the symbols and `<Version>11.105.8.1</Version>`:
+the first component of the package version is the EF Core major, as in upstream's own `9.x` / `10.x` pairs,
+so both projects share the package id and differ in version. Everything they compile is the shared code.
 
 Package metadata (in the csproj): `PackageId` `EntityFrameworkPlus.EFCore.MIT` (two prefixes are reserved on nuget.org: `Z.EntityFramework.*` by ZZZ Projects and
 `EntityFramework.*` by Microsoft — the first publish attempt, as `EntityFramework.Plus.EFCore.MIT`, was rejected
@@ -303,23 +317,26 @@ arrives.
 
 ## Build, verify, publish
 
-Prerequisites: .NET SDK 10.0.x; a local trusted SQL Server (`localhost`). Both test projects create
-their own databases (`Z.Test.EntityFramework.Plus.EFCore`, `EFPlusMitSmoke`); the smoke test's
-connection string can be overridden with `EFPLUS_MIT_SMOKE_CONNECTION`. The smoke test's batch theories
-run on InMemory and on SQLite in-memory, which need nothing installed.
+Prerequisites: .NET SDKs 10.0.x and 11.0.x (the release candidate until EF Core 11 ships); a local
+trusted SQL Server (`localhost`). The test projects create their own databases: upstream's suite uses
+`Z.Test.EntityFramework.Plus.EFCore` (hard-coded upstream, so the EF Core 10 and 11 runs must not overlap),
+the smoke fixture `EFPlusMitSmoke<EF major>`; the smoke connection string can be overridden with
+`EFPLUS_MIT_SMOKE_CONNECTION`. The smoke test's batch theories run on InMemory and on SQLite in-memory,
+which need nothing installed.
 
 Upstream's other projects in the solution still need the paid packages — and upstream `master` does
 not even build against the EFE version its 9x project pins (`GetParameterName` arrived in EFE after
-`9.104.0.1`). So work through the solution filter `src/EntityFrameworkPlus.EFCore.MIT.slnf`, which
-selects only the fork's three projects; open the `.slnf` in Rider or Visual Studio instead of the `.sln`.
+`9.104.0.1`). So work through the solution filters, one per EF Core version
+(`src/EntityFrameworkPlus.EFCore.MIT.EFCore10.slnf`, `…EFCore11.slnf`), each selecting that version's
+library, upstream's suite and the smoke tests; open a `.slnf` in Rider or Visual Studio instead of the `.sln`.
 
 ```bash
-dotnet build src/EntityFrameworkPlus.EFCore.MIT.slnf -c Release
-dotnet test  src/EntityFrameworkPlus.EFCore.MIT.slnf -c Release
-dotnet pack  src/Z.EntityFramework.Plus.EFCore10x.NET10 -c Release   # → src/Z.EntityFramework.Plus.EFCore10x.NET10/bin/Release/*.nupkg
+dotnet test  src/EntityFrameworkPlus.EFCore.MIT.EFCore10.slnf -c Release
+dotnet test  src/EntityFrameworkPlus.EFCore.MIT.EFCore11.slnf -c Release   # after the first: the upstream suites share a database
+dotnet pack  src/Z.EntityFramework.Plus.EFCore10x.NET10 -c Release          # → bin/Release/*.nupkg; EFCore11x.NET11 likewise
 ```
 
-What the two test projects prove, at `10.105.8.1` on EF Core 10.0.3:
+What the two test projects prove, at `10.105.8.1` on EF Core 10.0.3, and with the same numbers on EF Core 11 RC 1:
 
 - **Upstream suite** (270 tests): QueryFilter 79, QueryIncludeOptimized 44, QueryIncludeFilter 38,
   BatchUpdate 31, QueryCache 25, BatchDelete 18, QueryFuture 7, QueryDeferred 2, upstream repro cases 26.
@@ -361,12 +378,14 @@ Package check after `dotnet pack`: the nuspec's only dependency is `Microsoft.En
 Two GitHub Actions workflows in `.github/workflows/`, both on `windows-latest` with SQL Server 2022
 installed by `Potatoqualitee/mssqlsuite` (upstream's suite needs `localhost` + Windows authentication):
 
-- **`build.yml`** — on pushes to `master-MIT` and `features/**`, and PRs to `master-MIT`: build and test
-  through the solution filter, pack, upload the `.nupkg` as an artifact.
-- **`publish.yml`** — on a pushed tag `mit/<version>` (or `workflow_dispatch` with a version): build,
-  test, pack as `<version>`, push to nuget.org. The version must equal the csproj `<Version>` or be a
-  prerelease of it (`10.105.8.1-preview.1`), which keeps the "package version = upstream tag" rule
-  mechanical. A 409 fails the run: nuget.org uses it both for "version already exists" and for "package ID is reserved", and `--skip-duplicate` would report either as success. Re-running an already published version therefore fails with a clear message, which is the right outcome.
+- **`build.yml`** — on pushes to `master-MIT` and `features/**`, and PRs to `master-MIT`: with both SDKs
+  installed (`11.0.x` at preview quality while EF Core 11 is a release candidate), build and test the
+  EF Core 10 filter, then the EF Core 11 one, pack both libraries, upload the `.nupkg`s as one artifact.
+- **`publish.yml`** — on a pushed tag `mit/<version>` (or `workflow_dispatch` with a version): the
+  version's first component picks the project and filter (`10.*` → `EFCore10x.NET10`, `11.*` →
+  `EFCore11x.NET11`); build, test, pack as `<version>`, push to nuget.org. The version must equal that
+  csproj's `<Version>` or be a prerelease of it (`10.105.8.1-preview.1`), which keeps the "package
+  version = upstream tag" rule mechanical. A 409 fails the run: nuget.org uses it both for "version already exists" and for "package ID is reserved", and `--skip-duplicate` would report either as success. Re-running an already published version therefore fails with a clear message, which is the right outcome.
 
   Authentication is nuget.org **Trusted Publishing**: a policy on the package owner's nuget.org account
   bound to repository `sovist/EntityFramework-Plus-MIT`, workflow file `publish.yml`, scope "push new
@@ -401,7 +420,8 @@ If upstream ever adds its own `EFCore10x` project, diff it against ours and pref
 ## Versioning
 
 - The package version mirrors the upstream tag. Consumers can read "which upstream is this" off the
-  version alone.
+  version alone. The first component is the EF Core major the build is for: `10.105.8.1` and
+  `11.105.8.1` are one upstream release built for EF Core 10 and 11, as upstream's own `9.x` / `10.x` are.
 - Upstream uses four components (`10.105.8.1`), which leaves no room for a fork-only patch number.
   Policy: a fork-only fix waits for the next upstream release. If one cannot wait, bump the fourth
   component and record the mapping in this section.
@@ -467,7 +487,8 @@ section with the upstream tag it maps to.
 Open:
 
 1. **nuget.org co-owner** for the package, so it does not depend on one account.
-2. **Additional targets** (EF Core 8/9): not in the first release.
+2. **Additional targets** (EF Core 8/9): not planned. EF Core 11 is built and tested from RC 1 on;
+   publishing `11.x` waits for EF Core 11 to ship, or for a consumer on .NET 11, whichever comes first.
 
 ## History
 
@@ -500,3 +521,7 @@ Open:
   owner's, and a container hands out the same instance per scope, so a consumer's cleanup job making five
   batch calls per unit of work hit `ObjectDisposedException` on the second. The fallback now detaches the
   rows it attached instead, and disposes only a context it built itself. Smoke 45/45, upstream 270/270.
+- 2026-09-25 — EF Core 11 target from RC 1: `EFCore11x.NET11` and the two `EFCore110` test projects, one
+  solution filter and one CI pass per version, `publish.yml` picking the project by the version's major.
+  One `#if EFCORE_11X` (`ExtractParameters`); everything else compiled and passed unchanged: upstream
+  270/270, smoke 47/47 on EF Core 11 RC 1, the same on EF Core 10.

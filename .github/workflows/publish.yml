@@ -2,6 +2,8 @@ name: Publish to NuGet
 
 # Pushing a tag `mit/<version>` on master-MIT is the release: this builds, tests, packs the library as
 # `<version>` and pushes it to nuget.org. Prereleases work the same way (`mit/10.105.8.1-preview.1`).
+# The version's first component is the EF Core major it is built for, as in upstream's scheme, and
+# selects the project: `10.*` builds Z.EntityFramework.Plus.EFCore10x.NET10, `11.*` the EFCore11x.NET11 one.
 # `workflow_dispatch` re-runs a release for an existing tag.
 on:
   push:
@@ -38,20 +40,35 @@ jobs:
           else
             VERSION="${GITHUB_REF_NAME#mit/}"
           fi
+          case "$VERSION" in
+            10.*) PROJECT=src/Z.EntityFramework.Plus.EFCore10x.NET10/Z.EntityFramework.Plus.EFCore10x.NET10.csproj
+                  FILTER=src/EntityFrameworkPlus.EFCore.MIT.EFCore10.slnf ;;
+            11.*) PROJECT=src/Z.EntityFramework.Plus.EFCore11x.NET11/Z.EntityFramework.Plus.EFCore11x.NET11.csproj
+                  FILTER=src/EntityFrameworkPlus.EFCore.MIT.EFCore11.slnf ;;
+            *) echo "::error::Version '$VERSION' does not start with an EF Core major this repository builds for (10, 11)."; exit 1 ;;
+          esac
           # The package version mirrors the upstream tag the build is made from, which the csproj records
           # as <Version>. A release tag may only be that version or a prerelease of it.
-          CSPROJ_VERSION=$(sed -n 's/.*<Version>\(.*\)<\/Version>.*/\1/p' src/Z.EntityFramework.Plus.EFCore10x.NET10/Z.EntityFramework.Plus.EFCore10x.NET10.csproj)
+          CSPROJ_VERSION=$(sed -n 's/.*<Version>\(.*\)<\/Version>.*/\1/p' "$PROJECT")
           case "$VERSION" in
             "$CSPROJ_VERSION" | "$CSPROJ_VERSION"-*) ;;
             *) echo "::error::Version '$VERSION' does not match the csproj <Version> '$CSPROJ_VERSION' (the upstream tag this build is made from)."; exit 1 ;;
           esac
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
-          echo "Publishing EntityFrameworkPlus.EFCore.MIT $VERSION"
+          echo "PROJECT=$PROJECT" >> "$GITHUB_ENV"
+          echo "FILTER=$FILTER" >> "$GITHUB_ENV"
+          echo "Publishing EntityFrameworkPlus.EFCore.MIT $VERSION from $PROJECT"
 
-      - name: Setup .NET
+      - name: Setup .NET 10
         uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
+
+      - name: Setup .NET 11
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 11.0.x
+          dotnet-quality: preview
 
       - name: Install SQL Server
         uses: Potatoqualitee/mssqlsuite@v2
@@ -60,13 +77,13 @@ jobs:
           version: 2022
 
       - name: Build
-        run: dotnet build src/EntityFrameworkPlus.EFCore.MIT.slnf --configuration Release -p:Version=${{ env.VERSION }}
+        run: dotnet build ${{ env.FILTER }} --configuration Release -p:Version=${{ env.VERSION }}
 
       - name: Test
-        run: dotnet test src/EntityFrameworkPlus.EFCore.MIT.slnf --configuration Release --no-build --verbosity normal
+        run: dotnet test ${{ env.FILTER }} --configuration Release --no-build --verbosity normal
 
       - name: Pack
-        run: dotnet pack src/Z.EntityFramework.Plus.EFCore10x.NET10/Z.EntityFramework.Plus.EFCore10x.NET10.csproj --configuration Release --no-build -p:Version=${{ env.VERSION }} --output artifacts
+        run: dotnet pack ${{ env.PROJECT }} --configuration Release --no-build -p:Version=${{ env.VERSION }} --output artifacts
 
       - name: Upload package
         uses: actions/upload-artifact@v7

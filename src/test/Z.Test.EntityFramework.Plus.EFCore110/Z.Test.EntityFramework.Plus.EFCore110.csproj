@@ -1,0 +1,81 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup Label="Globals">
+    <SccProjectName></SccProjectName>
+    <SccProvider></SccProvider>
+    <SccAuxPath></SccAuxPath>
+    <SccLocalPath></SccLocalPath>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>TRACE;DEBUG;RELEASE;NETCOREAPP2_0; EFCORE; FULL EFCORE_3X EFCORE_5X EFCORE_6X EFCORE_7X EFCORE_8X EFCORE_9X EFCORE_10X EFCORE_11X IsCore7</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DefineConstants>TRACE;RELEASE;NETCOREAPP2_0; EFCORE; FULL EFCORE_3X EFCORE_5X EFCORE_6X EFCORE_7X EFCORE_8X EFCORE_9X EFCORE_10X EFCORE_11X IsCore7</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="11.0.0-rc.1.26425.128" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="11.0.0-rc.1.26425.128" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="MSTest.TestAdapter" Version="3.8.3" />
+    <PackageReference Include="MSTest.TestFramework" Version="3.8.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Z.EntityFramework.Plus.EFCore11x.NET11\Z.EntityFramework.Plus.EFCore11x.NET11.csproj" />
+  </ItemGroup>
+
+  <Import Project="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\Z.Test.EntityFramework.Plus.EFCore.Shared.projitems" Label="Shared" />
+
+  <Import Project="..\Z.Test.EntityFramework.Plus.Test.Shared\Z.Test.EntityFramework.Plus.Test.Shared.projitems" Label="Shared" />
+
+  <ItemGroup>
+    <!--
+      Batch Update/Delete come from this build's own EF Core implementation: the object-initializer form, no options builder. 
+      The upstream tests below exercise Z.EntityFramework.Extensions-only behaviour (BatchSize, BatchDelayInterval, Executing, InMemoryDbContextFactory, Skip/Take visitors) and stay out,
+      every other upstream batch test runs against this build.
+    -->
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchDelete\BatchDelayInterval\Default.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchDelete\BatchDelayInterval\FiftyMilliseconds.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchDelete\BatchDelete_BatchSize.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchDelete\BatchSize\Default.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchDelete\BatchSize\One.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchDelete\BatchSize\Ten.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchDelete\BatchSize\Zero.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchDelete\Executing\Template.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchDelete\Executing\WhileDelayTemplate.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchDelete\Executing\WhileTemplate.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchDelete\InMemory\Ten.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchDelete\InMemory\Thirty.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchDelete\InMemory\Twenty.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchDelete\Visitor\Skip.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchDelete\Visitor\Take.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchUpdate\BatchDelayInterval\Default.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchUpdate\BatchDelayInterval\FiftyMilliseconds.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchUpdate\BatchSize\Default.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchUpdate\BatchSize\One.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchUpdate\BatchSize\Ten.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchUpdate\BatchSize\Zero.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchUpdate\BatchUpdate_BatchSize.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchUpdate\Executing\Template.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchUpdate\Executing\WhileDelayTemplate.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchUpdate\Executing\WhileTemplate.cs" />
+    <!-- These call Z.EntityFramework.Extensions directly (UpdateFromQuery, BulkInsert). -->
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\MikaelAreaIndependant\QueryCache.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\MikaelAreaIndependant\Autre.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\MikaelAreaIndependant\UpdateFromQueryDic.cs" />
+    <!-- The EFCore90 project's own QueryIncludeOptimized tests, compiled from where they live rather than copied. -->
+    <Compile Include="..\Z.Test.EntityFramework.Plus.EFCore90\QueryIncludeOptimized\**\*.cs" />
+    <!-- The fork's DeleteFromQuery -> ExecuteDelete() helper, compiled from the EFCore100 project where it lives. -->
+    <Compile Include="..\Z.Test.EntityFramework.Plus.EFCore100\DeleteFromQueryExtensions.cs" />
+  </ItemGroup>
+
+</Project>
