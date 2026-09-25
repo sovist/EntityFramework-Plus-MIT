@@ -27,12 +27,12 @@ and packaging.
    upstream's file and re-add the projects from the IDE. `dotnet sln add` also works, but it invents `x64` and `x86` solution platforms
    and writes mappings for *every* project in the solution (200 lines); strip those before committing —
    upstream's solution is `Any CPU` only.
-2. **`master` mirrors upstream exactly.** Never commit to it; only `git pull upstream master`.
+2. **`master` — read-only, Sync fork only.** It mirrors upstream exactly.
 3. **`master-MIT` is the release branch and the GitHub default branch.** Merge `master` into it.
    Never rebase it — published packages point at it.
-4. **Work happens on short-lived branches off `master-MIT`** (`features/<slug>`), merged back with a
-   pull request. `master-MIT` itself only receives merges: from `master` (upstream sync) or from a
-   feature branch.
+4. **`master-MIT` — no direct writes, pull requests only.** Work happens on short-lived branches off it
+   (`features/<slug>`); it receives merges from `master` (upstream sync) or from a feature branch,
+   through a pull request either way.
 5. **Package version = the upstream tag the release is built from.**
 
 ## What ships
@@ -374,17 +374,23 @@ versions are immutable and the four-component scheme leaves no room for a fork-o
 
 ## Upstream sync runbook
 
-```bash
-git checkout master     && git pull upstream master && git push origin master
-git checkout master-MIT && git merge master          # or a features/ branch off master-MIT, then PR
-```
+1. On GitHub, **Sync fork → Update branch** on `master` (or `gh repo sync sovist/EntityFramework-Plus-MIT --branch master`).
+   A `git push origin master` is rejected; this is the only way `master` moves.
+2. Locally:
 
-Then, in order: contract-check grep → read the upstream diff for the folders we import
-(`git diff <previous-upstream-tag>..master -- src/shared/`) → build the library → run both test
-projects (a new upstream test that calls EFE directly shows up as a compile error: add it to the
-`Compile Remove` list) → update `<Version>` in the csproj to the new upstream tag → merge → tag
-`mit/<version>` and let CI publish. If upstream ever adds its own `EFCore10x` project, diff it against
-ours and prefer theirs.
+   ```bash
+   git fetch origin && git fetch upstream --tags                     # upstream's tags name the release
+   git checkout master && git merge --ff-only origin/master          # local mirror catches up
+   git checkout -b features/sync-<upstream-tag> master-MIT && git merge master
+   ```
+
+3. On that branch, in order: contract-check grep → read the upstream diff for the folders we import
+   (`git diff <previous-upstream-tag>..master -- src/shared/`) → build the library → run both test
+   projects (a new upstream test that calls EFE directly shows up as a compile error: add it to the
+   `Compile Remove` list) → update `<Version>` in the csproj to the new upstream tag.
+4. Pull request into `master-MIT`, merge commit (ground rule 4) → tag `mit/<version>` and let CI publish.
+
+If upstream ever adds its own `EFCore10x` project, diff it against ours and prefer theirs.
 
 ## Versioning
 
