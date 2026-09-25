@@ -13,7 +13,8 @@ whether or not it calls anything in them. This fork removes the dependencies so 
 of a consuming application is MIT + EF Core, nothing else.
 
 This fork is not affiliated with or endorsed by ZZZ Projects. Upstream code is compiled unchanged; the
-fork adds a shim, one project, two test projects and packaging.
+fork adds a shim, a Batch Update / Batch Delete implementation on EF Core, one project, two test projects
+and packaging.
 
 ## Ground rules
 
@@ -44,18 +45,19 @@ fork adds a shim, one project, two test projects and packaging.
 | Query IncludeFilter (Core), Query IncludeOptimized | yes | Async paths are `Task.Run`, as upstream. |
 | Audit | yes | |
 | Query Extensions, Set Dynamic, Set Identity | yes | Set Identity needs a 15-line metadata shim (`ToZInfo`). |
-| **Batch Update / Batch Delete** (`Update`, `Delete`, `UpdateAsync`, `DeleteAsync`) | **no** | On EF Core these are facades over `Z.EntityFramework.Extensions` (`UpdateFromQuery` / `DeleteFromQuery`, including the InMemory hook). Plus's own `BatchUpdate.cs` is commented out upstream. Use EF Core's `ExecuteUpdate` / `ExecuteDelete`. |
+| Batch Update / Batch Delete (`Update`, `Delete`, `UpdateAsync`, `DeleteAsync`) | yes | Upstream's are facades over `Z.EntityFramework.Extensions` (`UpdateFromQuery` / `DeleteFromQuery`, including the InMemory hook); Plus's own `BatchUpdate.cs` is commented out upstream. The fork reimplements the four methods on EF Core's `ExecuteUpdate` / `ExecuteDelete` with upstream's signatures — see [Batch Update / Batch Delete](#batch-update--batch-delete-batch). Object-initializer factory only; no `BatchUpdate` / `BatchDelete` options. |
 | **Query Hook** (`WithHint`, temporal-table and command-executing extensions) | **no** | Pure facade over `Z.EntityFramework.Extensions.PublicMethodForEFPlus`; no Plus implementation behind it. |
 | Bulk operations (`BulkInsert`, `BulkSaveChanges`, `WhereBulkContains`, …) | **no** | Never were in Plus; they are `Z.EntityFramework.Extensions` features. |
 
 Non-goals: no API changes, no fixes to upstream behaviour (report those upstream), no
-reimplementation of batch or bulk operations.
+reimplementation of Query Hook or bulk operations.
 
 ## The shim
 
 Upstream's EF Core shared code reaches the two paid assemblies in two very different ways, and the
-shim (`src/Z.EntityFramework.Plus.EFCore10x.NET10/Shim/`) answers both. Everything is `internal`,
-compiled into the Plus assembly, in the namespaces upstream code imports — `Shim/Extensions/` holds
+shim (`src/Z.EntityFramework.Plus.EFCore10x.NET10/Shim/`) answers both. Everything is `internal` —
+except `EntityFrameworkManager`, public because its `ContextFactory` is a hook consumers set (see the
+Batch section) — compiled into the Plus assembly, in the namespaces upstream code imports — `Shim/Extensions/` holds
 `Z.EntityFramework.Extensions`, `Shim/EvalManager.cs` holds `Z.Expressions`, and
 `Shim/EntityTypeInfoExtensions.cs` sits in `Z.EntityFramework.Plus` because its one caller imports
 nothing else.
@@ -76,6 +78,10 @@ Call-site counts are for the folders the EF Core project imports, at `10.105.8.1
 
 `ToZInfo(IEntityType)` for Set Identity is an eighth trivial member: schema and table name via EF
 Core's `GetSchema()` / `GetTableName()`.
+
+`EntityFrameworkManager.ContextFactory` stands in for nothing upstream calls: it is the fork's InMemory
+hook for Batch Update / Delete, kept under EF Extensions' name and signature so a consumer's existing
+wiring survives the switch.
 
 ### The compile step (`Shim/Extensions/QueryCommandExtensions.cs`)
 
@@ -143,8 +149,9 @@ git grep -n -E "EntityFrameworkManager\.|PublicMethods\.|PublicExtensions\.|Eval
 ```
 
 (`QueryFilterInterceptor.Shared` and `QueryIncludeFilter.Shared` are not imported by the EF Core
-project; the batch and hook folders are excluded by this fork.) A new member means: extend the shim if
-it is trivially replaceable, otherwise stop and look at what upstream started depending on.
+project; the batch folders are replaced by the fork's `Batch/`, and the hook folder is excluded.) A new
+member means: extend the shim if it is trivially replaceable, otherwise stop and look at what upstream
+started depending on.
 
 ### Provenance
 
@@ -163,6 +170,53 @@ done to explain why upstream's own 9x project does not build. Each piece comes f
 | Member names, namespaces and signatures | Dictated by the MIT call sites in upstream's shared code, which this fork compiles unchanged. |
 
 Recorded 2026-09-24, when the shim was written.
+
+## Batch Update / Batch Delete (`Batch/`)
+
+On EF Core 3+ upstream's `Update` / `Delete` extension methods are one-liners over EFE's
+`UpdateFromQuery` / `DeleteFromQuery`; Plus's own `BatchUpdate.cs` is commented out. Dropping the feature
+would have made every consumer rewrite its call sites against `ExecuteUpdate`'s `SetProperty` builder
+— and, on the InMemory provider, pass the `DbContext` explicitly, because InMemory has no `ExecuteUpdate`
+and the context behind an `IQueryable` is not public API. So the fork provides the four public methods
+with upstream's exact signatures (`namespace Z.EntityFramework.Plus`, no context parameter). They live in
+`Batch/`, not `Shim/`: this is fork-owned public API, not a stand-in for a paid member.
+
+- **Relational providers.** `Update(factory)` becomes `ExecuteUpdate(setters => …)` with one
+  `SetProperty` per `MemberAssignment` of the factory's object initializer; `Delete()` is
+  `ExecuteDelete()`. A value that reads the row (`t => new T { Order = t.Order + 1 }`) goes through the
+  `SetProperty(Expression, Expression)` overload; a row-independent value (a constant, a captured local)
+  is evaluated once and goes through `SetProperty(Expression, TProperty)`, which EF parameterises. The
+  split is not cosmetic: on EF Core 10.0.0–10.0.6 a constant assigned to a nullable member through the
+  expression overload fails to translate ("No coercion operator is defined", dotnet/efcore#37974).
+- **Where the context comes from.** Upstream's own internal `IsInMemoryQueryContext()` /
+  `GetInMemoryContext()` (`_Core.Shared`), which read it off the query's `QueryContextFactory` through
+  the shim's `GetQueryContextFactory`. That is what lets the signatures stay parameterless.
+- **InMemory provider.** No `ExecuteUpdate` / `ExecuteDelete` — the provider throws rather than falling
+  back — so the rows are read with `AsNoTracking()` and saved through a *second* context over the same
+  database (`InMemoryContext`): each row is attached there alone (`Entry(row).State`, which unlike
+  `Attach` / `Remove` does not walk navigations), the factory's members are applied and marked modified
+  or the row is marked deleted, and that context saves and is disposed. The query's own context is never
+  touched, which is the statement contract in full — a statement changes rows, not objects: tracked
+  instances keep their values, the unit of work's other pending changes stay pending, nothing new is
+  tracked, and later queries see the new rows. Saving through the query's context cannot give all of
+  that: with a save, every pending change in the unit of work goes to the store early (a consumer's
+  history diff right after a batch call found nothing left to diff); without one, later reads miss the
+  rows. The second context comes from `EntityFrameworkManager.ContextFactory` (`Func<DbContext, DbContext>`,
+  the hook EF Extensions had, so a consumer's existing wiring keeps working) or, when that is unset or
+  returns null, from constructing the context's own type with its own `IDbContextOptions` — the
+  constructor an EF Core context has by convention. A context that needs more, one resolved from a
+  container for instance, sets the hook.
+- **Not provided.** The `ExpandoObject`, `IDictionary` and anonymous-object update factories, and the
+  `BatchUpdate` / `BatchDelete` options builders (`BatchSize`, `BatchDelayInterval`, `Executing`,
+  `InMemoryDbContextFactory`, `UseTableLock`). Those were EFE features with EFE semantics (`BatchSize`
+  chunks the statement) that `ExecuteUpdate` cannot honour; upstream's tests for them are the
+  `Compile Remove` list in the EFCore100 test project. A factory that is not an object initializer
+  throws `ArgumentException`.
+- **Translation limits are EF Core's.** Whatever `ExecuteUpdate` / `ExecuteDelete` refuse for a provider
+  (`Skip`, some `Include` / `Select` shapes), these refuse too. EFE generated its own SQL and accepted more.
+
+Nothing here reflects EF Core internals. The `UpdateSettersBuilder<T>.SetProperty` overloads are picked by
+reflection over public API and cached per (entity type, member type, overload).
 
 ## Project layout
 
@@ -183,9 +237,18 @@ src/
         QueryCommandExtensions.cs                   # the compile step
       EvalManager.cs                                # namespace Z.Expressions
       EntityTypeInfoExtensions.cs                   # namespace Z.EntityFramework.Plus (ToZInfo)
+    Batch/                                          # Batch Update / Delete on ExecuteUpdate / ExecuteDelete, upstream's signatures
+      BatchUpdateExtensions.cs                      # the ExecuteUpdate proxy: object initializer → SetProperty calls
+      BatchUpdateExtensions.InMemory.cs             # InMemory fallback: read untracked, apply, save through the second context
+      BatchDeleteExtensions.cs                      # the ExecuteDelete proxy
+      BatchDeleteExtensions.InMemory.cs             # InMemory fallback: read untracked, mark deleted, save through the second context
+      InMemoryContext.cs                            # the second context both fallbacks save through: ContextFactory, or the context's type from its options
   test/
     Z.Test.EntityFramework.Plus.EFCore100/          # upstream's shared test suite against this build — mirrors EFCore90
-    EntityFrameworkPlus.EFCore.MIT.Smoke/          # fork-owned xunit smoke test
+    EntityFrameworkPlus.EFCore.MIT.Smoke/          # fork-owned xunit + Shouldly smoke tests, one folder per feature
+      ShouldExtensions.cs                           # ShouldBeInOrder: sequence assertions as "these elements, in this order"
+      QueryFuture/                                  # round trips on SQL Server + InMemory: QueryFutureTests.SqlServer / .InMemory and their fixtures
+      Batch/                                        # Batch Update / Delete on InMemory + SQLite: one test class per extension class, one part per method
 FORK.md                                             # this file
 README.md                                           # the fork's readme; packed as the nuget.org readme too
 ```
@@ -197,9 +260,9 @@ The library csproj mirrors `Z.EntityFramework.Plus.EFCore9x.NET8.csproj` with th
 | `TargetFramework` | `net8.0` | `net10.0` |
 | `AssemblyName` / `RootNamespace` | `Z.EntityFramework.Plus.EFCore` | `EntityFrameworkPlus.EFCore.MIT` / `Z.EntityFramework.Plus` (no `.resx` anywhere, so the change is safe) |
 | `DefineConstants` | `… EFCORE_8X EFCORE_9X` | same + `EFCORE_10X` (upstream already guards with it) |
-| `<Import>` list | 15 projitems | 12 — without `BatchDelete`, `BatchUpdate`, `QueryHook` |
+| `<Import>` list | 15 projitems | 12 — without `BatchDelete` and `BatchUpdate` (replaced by `Batch/`) and `QueryHook` |
 | `PackageReference` | EF Relational 9.0.0, `Z.EntityFramework.Extensions.EFCore`, `Z.Expressions.Eval` | `Microsoft.EntityFrameworkCore.Relational` 10.0.0 only |
-| Shim sources | — | `Shim\**\*.cs`, via the SDK's default globbing |
+| Fork sources | — | `Shim\**\*.cs` and `Batch\**\*.cs`, via the SDK's default globbing |
 | `NoWarn` | — | `CS1591` (upstream XML docs are incomplete), `EF1001` (upstream reflects EF internals by design) |
 | `SignAssembly` | `False` | `False` (no key needed) |
 
@@ -213,18 +276,22 @@ Upload page or in the push response); `Version` = upstream tag; `Authors` upstre
 The test project follows upstream's per-version layout exactly: the csproj is
 `Z.Test.EntityFramework.Plus.EFCore90.csproj` with the target, package versions and project reference
 changed (current MSTest instead of upstream's 1.1.18, which does not run on .NET 10). Fork-specific
-additions sit at the end of the csproj: `Compile Remove` for the `BatchDelete` and `BatchUpdate` test
-folders and four repro files that call EFE's batch API directly; a `Compile Include` of the EFCore90
-project's own `QueryIncludeOptimized/` tests, compiled from where they live rather than copied (upstream
-keeps a copy per test project, and the older copies have drifted); and a fork-owned `DeleteFromQuery` →
-`ExecuteDelete()` helper so one IncludeOptimized-with-Future repro test keeps compiling. No `App.config`:
-it is EF6-era configuration and the shared tests hard-code their connection string.
+additions sit at the end of the csproj: `Compile Remove` for the 25 batch test files that pass a
+`BatchUpdate` / `BatchDelete` options lambda (`BatchSize`, `BatchDelayInterval`, `Executing`,
+`InMemoryDbContextFactory`, the `Skip` / `Take` visitor tests) and three repro files that call EFE
+directly (`UpdateFromQuery`, `BulkInsert`) — every other upstream batch test runs against the fork's
+implementation; a `Compile Include` of the EFCore90 project's own `QueryIncludeOptimized/` tests,
+compiled from where they live rather than copied (upstream keeps a copy per test project, and the older
+copies have drifted); and a fork-owned `DeleteFromQuery` → `ExecuteDelete()` helper so one
+IncludeOptimized-with-Future repro test keeps compiling. No `App.config`: it is EF6-era configuration and
+the shared tests hard-code their connection string.
 
 ## Build, verify, publish
 
 Prerequisites: .NET SDK 10.0.x; a local trusted SQL Server (`localhost`). Both test projects create
 their own databases (`Z.Test.EntityFramework.Plus.EFCore`, `EFPlusMitSmoke`); the smoke test's
-connection string can be overridden with `EFPLUS_MIT_SMOKE_CONNECTION`.
+connection string can be overridden with `EFPLUS_MIT_SMOKE_CONNECTION`. The smoke test's batch theories
+run on InMemory and on SQLite in-memory, which need nothing installed.
 
 Upstream's other projects in the solution still need the paid packages — and upstream `master` does
 not even build against the EFE version its 9x project pins (`GetParameterName` arrived in EFE after
@@ -239,16 +306,26 @@ dotnet pack  src/Z.EntityFramework.Plus.EFCore10x.NET10 -c Release   # → src/Z
 
 What the two test projects prove, at `10.105.8.1` on EF Core 10.0.3:
 
-- **Upstream suite** (219 tests): QueryFilter 79, QueryIncludeOptimized 44, QueryIncludeFilter 38,
-  QueryCache 25, QueryFuture 7, QueryDeferred 2, upstream repro cases 24. Audit contributes nothing on
-  EF Core in upstream's suite either (106 of its 126 test files are `#if EF5 || EF6`). Batch tests (76)
-  are excluded with the feature.
-- **Smoke** (8 tests): two entity futures + `DeferredCount` + `DeferredFirstOrDefault` in **one server
-  round trip** (`SqlConnection.RetrieveStatistics`), with and without `EnableRetryOnFailure` — the
-  buffering case is the one that justifies the compile step; an `Include` graph; two queries whose EF
-  parameters have the same name but different values (exercises `GetParameterName`); a global query
-  filter reading a context property (runtime parameters); the sync path; `FromCache` hitting the cache;
-  and the InMemory provider (non-batched path).
+- **Upstream suite** (270 tests): QueryFilter 79, QueryIncludeOptimized 44, QueryIncludeFilter 38,
+  BatchUpdate 31, QueryCache 25, BatchDelete 18, QueryFuture 7, QueryDeferred 2, upstream repro cases 26.
+  The 49 batch tests are upstream's own (`Value`, `WhereValue`, `Action`, `ActionAsync`, `PrimaryKey`,
+  `SqlSchema`, `Transaction`, `Keyword`, one `Visitor` case each), on SQL Server, against the fork's
+  `ExecuteUpdate` / `ExecuteDelete` implementation; the 25 files bound to EFE options are excluded.
+  Audit contributes nothing on EF Core in upstream's suite either (106 of its 126 test files are
+  `#if EF5 || EF6`).
+- **Smoke** (43 tests). Query Future (8): two entity futures + `DeferredCount` + `DeferredFirstOrDefault`
+  in **one server round trip** (`SqlConnection.RetrieveStatistics`), with and without
+  `EnableRetryOnFailure` — the buffering case is the one that justifies the compile step; an `Include`
+  graph; two queries whose EF parameters have the same name but different values (exercises
+  `GetParameterName`); a global query filter reading a context property (runtime parameters); the sync
+  path; `FromCache` hitting the cache; and the InMemory provider (non-batched path). Batch (35: 17
+  theories × InMemory and SQLite, so the statement path and the fallback path answer the same
+  assertions, plus one InMemory fact): assigned members set; a constant into a nullable member (the
+  efcore#37974 case); a value reading its own row; rows reached through a join; zero matches; persisted
+  without `SaveChanges` while loading nothing into the context; a tracked instance left unchanged when
+  its row is updated or deleted; the unit of work's other pending changes left unsaved; the sync
+  overloads; a non-initializer factory rejected; and the `ContextFactory` hook being the context saved
+  through.
 
 Package check after `dotnet pack`: the nuspec's only dependency is `Microsoft.EntityFrameworkCore.Relational`,
 `lib/net10.0/` holds `EntityFrameworkPlus.EFCore.MIT.dll` + `.xml`, `LICENSE` is at the root, and the
@@ -318,6 +395,9 @@ ours and prefer theirs.
    bump needs both test projects.
 5. **Not for** applications that reference `Z.EntityFramework.Extensions.EFCore` directly for its own
    features; they have the dependency anyway and should stay on upstream.
+6. **Batch Update / Delete are EF Core translations**, not EFE's SQL generation: a query EFE accepted may
+   not translate, the options builders are gone, and the InMemory fallback loads the matching rows (which
+   is what InMemory is for). Details in the Batch section above.
 
 ## Decisions
 
@@ -334,6 +414,20 @@ ours and prefer theirs.
 - **README replaced.** Upstream's `README.md` was marketing for ZZZ Projects' products (including the
   dependency this fork removes); ours describes the package and is also packed as `PackageReadmeFile`.
   If an upstream merge conflicts on it, take ours.
+- **Batch Update / Delete reimplemented, not dropped.** The first release excluded them and pointed at
+  `ExecuteUpdate` / `ExecuteDelete`. Migrating a real consumer showed what that costs: a wrapper
+  extension method in every consumer *with a `DbContext` parameter*, because InMemory has no
+  `ExecuteUpdate` and the context behind a query is not reachable through public API. Upstream's internal
+  `GetInMemoryContext()` already solves that inside the library, so the four methods keep upstream's
+  signatures and a migrating consumer changes only its `PackageReference`. Object-initializer factory
+  only; the other factory forms and the options builders were EFE features with EFE semantics.
+- **The InMemory fallback saves through a second context**, as EF Extensions did, not through the
+  query's own. The first version saved through the query's context and restored its tracked instances
+  afterwards; a consumer's test caught what that cannot restore — the unit of work's other pending
+  changes, which a statement leaves alone and which the consumer diffed for history right after the
+  batch call. `EntityFrameworkManager.ContextFactory` keeps EF Extensions' name and signature so the
+  consumer's existing hook needs no change; the options-constructor default covers contexts that need
+  nothing else.
 
 Open:
 
@@ -353,3 +447,13 @@ Open:
   rejected by nuget.org: `EntityFramework.*` is a Microsoft-reserved prefix. The run still went green
   because `--skip-duplicate` reports every 409 as "already exists". Renamed the package to
   `EntityFrameworkPlus.EFCore.MIT`, removed `--skip-duplicate`, deleted the tag; nothing was published.
+- 2026-09-25 — Batch Update / Batch Delete reimplemented on `ExecuteUpdate` / `ExecuteDelete` with
+  upstream's signatures (`Batch/`), after migrating a consumer showed that dropping them forces a
+  context-taking wrapper into every consumer. Upstream's batch tests re-included except the 25 files bound
+  to EFE options: upstream suite 270/270, smoke 38/38 (batch theories on InMemory and SQLite). Found
+  dotnet/efcore#37974 on the way (constant into a nullable member fails to translate on EF Core
+  10.0.0–10.0.6) and routed row-independent values through the `SetProperty` value overload.
+- 2026-09-25 — InMemory fallback reworked to save through a second context, after a consumer test showed
+  the shared-context version flushing the unit of work's pending changes: `EntityFrameworkManager.ContextFactory`
+  (EF Extensions' hook, now public in the shim) or the context's own type from its options;
+  `TrackedInstances` removed. Smoke 43/43, upstream 270/270.
