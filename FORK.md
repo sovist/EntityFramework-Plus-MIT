@@ -20,10 +20,11 @@ and packaging.
 
 1. **Never edit upstream source files.** Everything the fork needs lives in files upstream does not
    have. This is what keeps upstream merges conflict-free. The one exception is
-   `src/Z.EntityFramework.Plus.sln`, which gains the fork's three projects — 20 additive lines: the
-   `Project` entries, `Debug|Any CPU` / `Release|Any CPU` mappings, and nesting of the two test projects
-   under the `test` folder. If a merge conflicts there, take upstream's file and re-add the three
-   projects from the IDE. `dotnet sln add` also works, but it invents `x64` and `x86` solution platforms
+   `src/Z.EntityFramework.Plus.sln`, which gains the fork's projects — about 30 additive lines: `Project`
+   entries and `Debug|Any CPU` / `Release|Any CPU` mappings for the three csproj, `.shproj` entries for the
+   two shared projects, nesting under the `shared` and `test` folders, and the `SharedMSBuildProjectFiles`
+   lines that tie each `.projitems` to the projects importing it. If a merge conflicts there, take
+   upstream's file and re-add the projects from the IDE. `dotnet sln add` also works, but it invents `x64` and `x86` solution platforms
    and writes mappings for *every* project in the solution (200 lines); strip those before committing —
    upstream's solution is `Any CPU` only.
 2. **`master` mirrors upstream exactly.** Never commit to it; only `git pull upstream master`.
@@ -55,7 +56,7 @@ reimplementation of Query Hook or bulk operations.
 ## The shim
 
 Upstream's EF Core shared code reaches the two paid assemblies in two very different ways, and the
-shim (`src/Z.EntityFramework.Plus.EFCore10x.NET10/Shim/`) answers both. Everything is `internal` —
+shim (`src/shared/Z.EF.Plus.MIT.Shared/Shim/`) answers both. Everything is `internal` —
 except `EntityFrameworkManager`, public because its `ContextFactory` is a hook consumers set (see the
 Batch section) — compiled into the Plus assembly, in the namespaces upstream code imports — `Shim/Extensions/` holds
 `Z.EntityFramework.Extensions`, `Shim/EvalManager.cs` holds `Z.Expressions`, and
@@ -225,13 +226,15 @@ reflection over public API and cached per (entity type, member type, overload).
   build.yml                                         # build + test + pack on every push/PR
   publish.yml                                       # tag mit/<version> → nuget.org
 src/
-  Z.EntityFramework.Plus.sln                        # upstream's solution + the three fork projects (see ground rule 1)
-  EntityFrameworkPlus.EFCore.MIT.slnf              # solution filter: only the fork's projects — open this one
-  Z.EntityFramework.Plus.EFCore10x.NET10/           # the library — mirrors EFCore9x.NET8
+  Z.EntityFramework.Plus.sln                        # upstream's solution + the fork's projects (see ground rule 1)
+  EntityFrameworkPlus.EFCore.MIT.slnf              # solution filter: only the fork's buildable projects — open this one
+  Z.EntityFramework.Plus.EFCore10x.NET10/           # the library for EF Core 10 — mirrors EFCore9x.NET8; the csproj alone
     Z.EntityFramework.Plus.EFCore10x.NET10.csproj
+  shared/Z.EF.Plus.MIT.Shared/                      # the fork's own code, imported by every EFCore1Nx csproj like upstream's feature folders
+    Z.EF.Plus.MIT.Shared.projitems                  # the file list; .shproj beside it is for the IDE
     Shim/
       Extensions/                                   # namespace Z.EntityFramework.Extensions
-        EntityFrameworkManager.cs
+        EntityFrameworkManager.cs                   # + ContextFactory, the InMemory hook (public)
         PublicMethods.cs
         PublicExtensions.cs
         QueryCommandExtensions.cs                   # the compile step
@@ -245,10 +248,11 @@ src/
       InMemoryContext.cs                            # the second context both fallbacks save through: ContextFactory, or the context's type from its options
   test/
     Z.Test.EntityFramework.Plus.EFCore100/          # upstream's shared test suite against this build — mirrors EFCore90
-    EntityFrameworkPlus.EFCore.MIT.Smoke/          # fork-owned xunit + Shouldly smoke tests, one folder per feature
+    EntityFrameworkPlus.EFCore.MIT.Smoke.Shared/    # fork-owned xunit + Shouldly smoke tests, one folder per feature; .projitems + .shproj
       ShouldExtensions.cs                           # ShouldBeInOrder: sequence assertions as "these elements, in this order"
       QueryFuture/                                  # round trips on SQL Server + InMemory: QueryFutureTests.SqlServer / .InMemory and their fixtures
       Batch/                                        # Batch Update / Delete on InMemory + SQLite: one test class per extension class, one part per method
+    EntityFrameworkPlus.EFCore.MIT.Smoke.EFCore100/ # the smoke tests against the EF Core 10 build: target framework, package pins, project reference
 FORK.md                                             # this file
 README.md                                           # the fork's readme; packed as the nuget.org readme too
 ```
@@ -260,9 +264,9 @@ The library csproj mirrors `Z.EntityFramework.Plus.EFCore9x.NET8.csproj` with th
 | `TargetFramework` | `net8.0` | `net10.0` |
 | `AssemblyName` / `RootNamespace` | `Z.EntityFramework.Plus.EFCore` | `EntityFrameworkPlus.EFCore.MIT` / `Z.EntityFramework.Plus` (no `.resx` anywhere, so the change is safe) |
 | `DefineConstants` | `… EFCORE_8X EFCORE_9X` | same + `EFCORE_10X` (upstream already guards with it) |
-| `<Import>` list | 15 projitems | 12 — without `BatchDelete` and `BatchUpdate` (replaced by `Batch/`) and `QueryHook` |
+| `<Import>` list | 15 projitems | 13 — upstream's without `BatchDelete` and `BatchUpdate` (replaced by the fork's `Batch/`) and `QueryHook`, plus `Z.EF.Plus.MIT.Shared` |
 | `PackageReference` | EF Relational 9.0.0, `Z.EntityFramework.Extensions.EFCore`, `Z.Expressions.Eval` | `Microsoft.EntityFrameworkCore.Relational` 10.0.0 only |
-| Fork sources | — | `Shim\**\*.cs` and `Batch\**\*.cs`, via the SDK's default globbing |
+| Fork sources | — | through the `Z.EF.Plus.MIT.Shared` import; the project folder holds only the csproj |
 | `NoWarn` | — | `CS1591` (upstream XML docs are incomplete), `EF1001` (upstream reflects EF internals by design) |
 | `SignAssembly` | `False` | `False` (no key needed) |
 
@@ -285,6 +289,13 @@ compiled from where they live rather than copied (upstream keeps a copy per test
 copies have drifted); and a fork-owned `DeleteFromQuery` → `ExecuteDelete()` helper so one
 IncludeOptimized-with-Future repro test keeps compiling. No `App.config`: it is EF6-era configuration and
 the shared tests hard-code their connection string.
+
+The smoke tests follow the same split: the sources are `EntityFrameworkPlus.EFCore.MIT.Smoke.Shared`, a
+`.projitems` like upstream's, and `EntityFrameworkPlus.EFCore.MIT.Smoke.EFCore100` is a csproj holding only
+the target framework, the package pins and the project reference. An EF Core 11 target adds
+`…Smoke.EFCore110` and nothing else. The SQL Server database name `EFPlusMitSmoke` is shared by every
+version, so two versions must not run against one server at once; suffix it per version when the second
+arrives.
 
 ## Build, verify, publish
 
@@ -412,9 +423,12 @@ ours and prefer theirs.
 - **`AssemblyName` renamed** to `EntityFrameworkPlus.EFCore.MIT`: provenance visible in `bin/`, and
   no two DLLs with the same name if both packages ever meet. Namespaces stay `Z.EntityFramework.Plus`
   because upstream code is untouched, so consumer code changes only its `PackageReference`.
-- **Shim lives in the library project** (`Shim/`, sub-folders mirror namespaces); promote to a shared
-  projitems only if a second EF Core target is ever added.
-- **Upstream's solution is the entry point**; the fork's three projects are added to it (ground rule 1).
+- **Fork-owned code is a shared project**, `src/shared/Z.EF.Plus.MIT.Shared` (`Shim/` and `Batch/`),
+  imported by each versioned csproj exactly like upstream's feature folders, so an EF Core 11 project is a
+  csproj plus `#if EFCORE_11X` branches wherever EF's internals moved. It started inside the 10x project
+  and was promoted once EF Core 11 was two months out: a rename-only change then, rather than a rename
+  buried inside the port.
+- **Upstream's solution is the entry point**; the fork's projects are added to it (ground rule 1).
 - **Tests = upstream's own suite + a fork-owned smoke test.** Upstream's suite proves the features
   still behave; the smoke test proves the one thing upstream's suite cannot (single round trip, and
   scalar futures under buffering).
@@ -465,3 +479,7 @@ Open:
   the shared-context version flushing the unit of work's pending changes: `EntityFrameworkManager.ContextFactory`
   (EF Extensions' hook, now public in the shim) or the context's own type from its options;
   `TrackedInstances` removed. Smoke 43/43, upstream 270/270.
+- 2026-09-25 — `mit/10.105.8.1-preview.2` published from `master-MIT` after PR #3 (batch) and PR #4 (both
+  `ContextFactory` failure paths covered). Fork-owned code promoted to shared projects,
+  `Z.EF.Plus.MIT.Shared` for the library and `EntityFrameworkPlus.EFCore.MIT.Smoke.Shared` for the tests,
+  with one smoke csproj per EF Core version (`…Smoke.EFCore100`). Package content unchanged.

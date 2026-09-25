@@ -48,7 +48,8 @@
   <Import Project="..\shared\Z.EF.Plus.SetDynamic.Shared\Z.EF.Plus.SetDynamic.Shared.projitems" Label="Shared" />
   <Import Project="..\shared\Z.EF.Plus.SetIdentity.Shared\Z.EF.Plus.SetIdentity.Shared.projitems" Label="Shared" />
 
-  <!-- Shim\**\*.cs (the replacement for the paid-assembly surface) and Batch\**\*.cs (Batch Update/Delete on ExecuteUpdate/ExecuteDelete) are picked up by the SDK's default globbing. -->
+  <!-- The fork's own code: Shim\ (the replacement for the paid-assembly surface) and Batch\ (Batch Update/Delete on ExecuteUpdate/ExecuteDelete). -->
+  <Import Project="..\shared\Z.EF.Plus.MIT.Shared\Z.EF.Plus.MIT.Shared.projitems" Label="Shared" />
 
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.0" />

@@ -1,14 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <!--
-    Smoke tests for the MIT build: Query Future still combines queries into one round trip, with entity
-    graphs, scalar futures, parameter renaming, global-filter runtime parameters and a buffering (retrying)
-    execution strategy, on SQL Server and on the InMemory provider; 
-    Batch Update / Delete behave the same on SQLite (ExecuteUpdate / ExecuteDelete) and on InMemory (the load-and-save fallback).
+    The smoke tests against the EF Core 10 build. The tests live in EntityFrameworkPlus.EFCore.MIT.Smoke.Shared;
+    this project holds only the target framework, the package pins and the project reference, one such project
+    per EF Core version.
   -->
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>EntityFrameworkPlus.EFCore.MIT.Smoke</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>disable</Nullable>
     <IsPackable>false</IsPackable>
@@ -33,5 +33,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Z.EntityFramework.Plus.EFCore10x.NET10\Z.EntityFramework.Plus.EFCore10x.NET10.csproj" />
   </ItemGroup>
+
+  <Import Project="..\EntityFrameworkPlus.EFCore.MIT.Smoke.Shared\EntityFrameworkPlus.EFCore.MIT.Smoke.Shared.projitems" Label="Shared" />
 
 </Project>
