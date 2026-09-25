@@ -11,6 +11,13 @@ namespace EntityFrameworkPlus.EFCore.MIT.Smoke.Batch
     /// </summary>
     public abstract class BatchExtensionsTestsBase
     {
+        /// <summary>
+        /// Tests that assign the process-wide <c>EntityFrameworkManager.ContextFactory</c> share this xunit collection,
+        /// so no two of them run at once: a test setting or clearing the static while another one runs would hand that
+        /// test's query a different second context than the one it arranged.
+        /// </summary>
+        public const string ContextFactoryCollection = "EntityFrameworkManager.ContextFactory";
+
         public enum Provider
         {
             InMemory,
