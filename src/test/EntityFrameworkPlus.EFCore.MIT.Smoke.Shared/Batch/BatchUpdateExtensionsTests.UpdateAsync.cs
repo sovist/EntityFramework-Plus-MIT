@@ -272,6 +272,47 @@ namespace EntityFrameworkPlus.EFCore.MIT.Smoke.Batch
             exception.Message.ShouldContain("ContextFactory");
         }
 
+        [Fact]
+        public async Task UpdateAsync_ShouldLeaveContextFromContextFactoryUsable_When_FactoryHandsOutTheSameInstance()
+        {
+            using var database = await TestDatabase.Create(Provider.InMemory, Items());
+            using var context = database.CreateContext();
+            using var shared = database.CreateContext();
+
+            // A container-owned second context: the same instance for every call, disposed by its owner, not here.
+            EntityFrameworkManager.ContextFactory = current => ReferenceEquals(current, context) ? shared : null;
+
+            try
+            {
+                // Act
+                var first = await context.Items
+                    .Where(_ => _.BufferId == 10)
+                    .UpdateAsync(_ => new Item { Position = _.Position + 10 });
+
+                var second = await context.Items
+                    .Where(_ => _.BufferId == 10)
+                    .UpdateAsync(_ => new Item { BufferId = null });
+
+                // Assert
+                first.ShouldBe(2);
+
+                second.ShouldBe(2);
+
+                shared.ChangeTracker.Entries().ShouldBeEmpty();
+
+                (await shared.Items.CountAsync()).ShouldBe(3);
+
+                var items = await database.LoadItems();
+                items.ShouldBeInOrder(_ => _.Name, "c", "a", "b");
+                items.ShouldBeInOrder(_ => _.Position, 3, 11, 12);
+                items.ShouldBeInOrder(_ => _.BufferId, 20, null, null);
+            }
+            finally
+            {
+                EntityFrameworkManager.ContextFactory = null;
+            }
+        }
+
         /// <summary>A context the fallback cannot build from options alone, which is what the hook is for.</summary>
         private sealed class ItemsDbContextNeedingMore : DbContext
         {

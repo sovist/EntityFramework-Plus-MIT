@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Z.EntityFramework.Extensions;
 using Z.EntityFramework.Plus;
 
 namespace EntityFrameworkPlus.EFCore.MIT.Smoke.Batch
@@ -111,6 +112,40 @@ namespace EntityFrameworkPlus.EFCore.MIT.Smoke.Batch
             context.Entry(pending).State.ShouldBe(EntityState.Modified);
 
             (await database.LoadItems()).ShouldHaveSingleItem().Name.ShouldBe("c");
+        }
+
+        [Fact]
+        public async Task DeleteAsync_ShouldLeaveContextFromContextFactoryUsable_When_FactoryHandsOutTheSameInstance()
+        {
+            using var database = await TestDatabase.Create(Provider.InMemory, Items());
+            using var context = database.CreateContext();
+            using var shared = database.CreateContext();
+
+            // A container-owned second context: the same instance for every call, disposed by its owner, not here.
+            EntityFrameworkManager.ContextFactory = current => ReferenceEquals(current, context) ? shared : null;
+
+            try
+            {
+                // Act
+                var first = await context.Items.Where(_ => _.BufferId == 10).DeleteAsync();
+
+                var second = await context.Items.Where(_ => _.BufferId == 20).DeleteAsync();
+
+                // Assert
+                first.ShouldBe(2);
+
+                second.ShouldBe(1);
+
+                shared.ChangeTracker.Entries().ShouldBeEmpty();
+
+                (await shared.Items.CountAsync()).ShouldBe(0);
+
+                (await database.LoadItems()).ShouldBeEmpty();
+            }
+            finally
+            {
+                EntityFrameworkManager.ContextFactory = null;
+            }
         }
     }
 }

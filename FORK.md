@@ -196,8 +196,12 @@ with upstream's exact signatures (`namespace Z.EntityFramework.Plus`, no context
   back — so the rows are read with `AsNoTracking()` and saved through a *second* context over the same
   database (`InMemoryContext`): each row is attached there alone (`Entry(row).State`, which unlike
   `Attach` / `Remove` does not walk navigations), the factory's members are applied and marked modified
-  or the row is marked deleted, and that context saves and is disposed. The query's own context is never
-  touched, which is the statement contract in full — a statement changes rows, not objects: tracked
+  or the row is marked deleted, and that context saves. What happens to it then depends on who owns it: a
+  context the fork built from options is disposed; one the factory returned is left to its owner, with
+  the rows this call attached detached so it goes back as clean as it came. A container typically hands
+  out the same instance for a whole scope, and the next batch call gets it again — disposing it broke a
+  consumer whose cleanup job makes five batch calls per unit of work, the second of which found a disposed
+  context. The query's own context is never touched, which is the statement contract in full — a statement changes rows, not objects: tracked
   instances keep their values, the unit of work's other pending changes stay pending, nothing new is
   tracked, and later queries see the new rows. Saving through the query's context cannot give all of
   that: with a save, every pending change in the unit of work goes to the store early (a consumer's
@@ -324,20 +328,22 @@ What the two test projects prove, at `10.105.8.1` on EF Core 10.0.3:
   `ExecuteUpdate` / `ExecuteDelete` implementation; the 25 files bound to EFE options are excluded.
   Audit contributes nothing on EF Core in upstream's suite either (106 of its 126 test files are
   `#if EF5 || EF6`).
-- **Smoke** (45 tests). Query Future (8): two entity futures + `DeferredCount` + `DeferredFirstOrDefault`
+- **Smoke** (47 tests). Query Future (8): two entity futures + `DeferredCount` + `DeferredFirstOrDefault`
   in **one server round trip** (`SqlConnection.RetrieveStatistics`), with and without
   `EnableRetryOnFailure` — the buffering case is the one that justifies the compile step; an `Include`
   graph; two queries whose EF parameters have the same name but different values (exercises
   `GetParameterName`); a global query filter reading a context property (runtime parameters); the sync
-  path; `FromCache` hitting the cache; and the InMemory provider (non-batched path). Batch (37: 17
+  path; `FromCache` hitting the cache; and the InMemory provider (non-batched path). Batch (39: 17
   theories × InMemory and SQLite, so the statement path and the fallback path answer the same
-  assertions, plus three InMemory facts): assigned members set; a constant into a nullable member (the
+  assertions, plus five InMemory facts): assigned members set; a constant into a nullable member (the
   efcore#37974 case); a value reading its own row; rows reached through a join; zero matches; persisted
   without `SaveChanges` while loading nothing into the context; a tracked instance left unchanged when
   its row is updated or deleted; the unit of work's other pending changes left unsaved; the sync
   overloads; a non-initializer factory rejected; the `ContextFactory` hook being the context saved
-  through; and both ways the second context cannot be had — the hook returning the query's own context,
-  and a context type the default cannot construct with no hook set.
+  through; both ways the second context cannot be had — the hook returning the query's own context,
+  and a context type the default cannot construct with no hook set; and a hook handing out the same
+  context on every call, which two updates of the same rows and two deletes leave undisposed, usable
+  and tracking nothing.
 
 Line coverage of the fork-owned code (`Batch\`, `Shim\`), both suites merged, is 93%: 278 of 299 lines.
 Uncovered: the two `IsCommunity` setters nothing calls, `PublicMethods.GetDatabase` and the `@_` branch of
@@ -490,3 +496,7 @@ Open:
   `ContextFactory` failure paths covered). Fork-owned code promoted to shared projects,
   `Z.EF.Plus.MIT.Shared` for the library and `EntityFrameworkPlus.EFCore.MIT.Smoke.Shared` for the tests,
   with one smoke csproj per EF Core version (`…Smoke.EFCore100`). Package content unchanged.
+- 2026-09-25 — A context returned by `ContextFactory` is no longer disposed by the fallback: it is its
+  owner's, and a container hands out the same instance per scope, so a consumer's cleanup job making five
+  batch calls per unit of work hit `ObjectDisposedException` on the second. The fallback now detaches the
+  rows it attached instead, and disposes only a context it built itself. Smoke 45/45, upstream 270/270.
