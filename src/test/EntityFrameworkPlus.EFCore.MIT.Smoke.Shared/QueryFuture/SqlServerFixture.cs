@@ -10,9 +10,10 @@ namespace EntityFrameworkPlus.EFCore.MIT.Smoke.QueryFuture
     {
         public const string ConnectionVariable = "EFPLUS_MIT_SMOKE_CONNECTION";
 
+        // One database per EF Core major, so the smoke projects for two versions can run against one server.
         public string ConnectionString { get; } =
             Environment.GetEnvironmentVariable(ConnectionVariable)
-            ?? "Server=localhost;Database=EFPlusMitSmoke;Trusted_Connection=True;TrustServerCertificate=True";
+            ?? $"Server=localhost;Database=EFPlusMitSmoke{typeof(DbContext).Assembly.GetName().Version!.Major};Trusted_Connection=True;TrustServerCertificate=True";
 
         public SqlServerFixture()
         {

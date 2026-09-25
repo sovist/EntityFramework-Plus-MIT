@@ -90,7 +90,12 @@ namespace Z.EntityFramework.Extensions
 
             var context = queryContext.Context;
             var logger = context.GetService<IDiagnosticsLogger<DbLoggerCategory.Query>>();
+#if EFCORE_11X
+            // EF Core 11 fixed generateContextAccessors to false inside ExtractParameters.
+            var expression = queryCompiler.ExtractParameters(query.Expression, queryContext.Parameters, logger, compiledQuery: false);
+#else
             var expression = queryCompiler.ExtractParameters(query.Expression, queryContext.Parameters, logger, compiledQuery: false, generateContextAccessors: false);
+#endif
 
             var executor = GetOrCreateExecutor(context, expression, query.ElementType);
             var enumerable = executor(queryContext);

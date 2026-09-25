@@ -17,16 +17,23 @@ jobs:
     # (hard-coded in an upstream file this fork does not edit), which needs a local default instance and
     # Windows authentication.
     runs-on: windows-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
 
     steps:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Setup .NET
+      - name: Setup .NET 10
         uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
+
+      # EF Core 11 is a release candidate until November 2026; the preview quality picks the RC SDK.
+      - name: Setup .NET 11
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 11.0.x
+          dotnet-quality: preview
 
       - name: Install SQL Server
         uses: Potatoqualitee/mssqlsuite@v2
@@ -34,16 +41,26 @@ jobs:
           install: sqlengine
           version: 2022
 
-      - name: Build
-        run: dotnet build src/EntityFrameworkPlus.EFCore.MIT.slnf --configuration Release
+      # One filter per EF Core version. The two upstream test projects share one SQL Server database
+      # (its name is hard-coded upstream), so the filters are built and tested one after the other.
+      - name: Build (EF Core 10)
+        run: dotnet build src/EntityFrameworkPlus.EFCore.MIT.EFCore10.slnf --configuration Release
 
-      - name: Test
-        run: dotnet test src/EntityFrameworkPlus.EFCore.MIT.slnf --configuration Release --no-build --verbosity normal
+      - name: Test (EF Core 10)
+        run: dotnet test src/EntityFrameworkPlus.EFCore.MIT.EFCore10.slnf --configuration Release --no-build --verbosity normal
+
+      - name: Build (EF Core 11)
+        run: dotnet build src/EntityFrameworkPlus.EFCore.MIT.EFCore11.slnf --configuration Release
+
+      - name: Test (EF Core 11)
+        run: dotnet test src/EntityFrameworkPlus.EFCore.MIT.EFCore11.slnf --configuration Release --no-build --verbosity normal
 
       - name: Pack
-        run: dotnet pack src/Z.EntityFramework.Plus.EFCore10x.NET10/Z.EntityFramework.Plus.EFCore10x.NET10.csproj --configuration Release --no-build --output artifacts
+        run: |
+          dotnet pack src/Z.EntityFramework.Plus.EFCore10x.NET10/Z.EntityFramework.Plus.EFCore10x.NET10.csproj --configuration Release --no-build --output artifacts
+          dotnet pack src/Z.EntityFramework.Plus.EFCore11x.NET11/Z.EntityFramework.Plus.EFCore11x.NET11.csproj --configuration Release --no-build --output artifacts
 
-      - name: Upload package
+      - name: Upload packages
         uses: actions/upload-artifact@v7
         with:
           name: nupkg

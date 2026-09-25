@@ -26,7 +26,8 @@ Coming from `Z.EntityFramework.Plus.EFCore`: change the package reference and no
 are unchanged (`using Z.EntityFramework.Plus;`). Then remove any `Z.EntityFramework.Extensions.EFCore` or
 `Z.Expressions.Eval` references you only had because of Plus.
 
-Targets `net10.0` / EF Core 10.
+Targets `net10.0` / EF Core 10, as versions `10.x`.
+Targets `net11.0` / EF Core 11, as versions `11.x`.
 
 ## What is included
 

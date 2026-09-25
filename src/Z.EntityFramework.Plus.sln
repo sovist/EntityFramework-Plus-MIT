@@ -93,6 +93,12 @@ Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Z.EF.Plus.MIT.Shared", "sha
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "EntityFrameworkPlus.EFCore.MIT.Smoke.Shared", "test\EntityFrameworkPlus.EFCore.MIT.Smoke.Shared\EntityFrameworkPlus.EFCore.MIT.Smoke.Shared.shproj", "{7F966A0F-4B95-4740-A28E-61B344EF6C90}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Z.EntityFramework.Plus.EFCore11x.NET11", "Z.EntityFramework.Plus.EFCore11x.NET11\Z.EntityFramework.Plus.EFCore11x.NET11.csproj", "{C18526BF-6740-4508-9C39-227CCDF76A26}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Z.Test.EntityFramework.Plus.EFCore110", "test\Z.Test.EntityFramework.Plus.EFCore110\Z.Test.EntityFramework.Plus.EFCore110.csproj", "{14D36099-AAED-4BC8-B12A-7072C7F613DC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EntityFrameworkPlus.EFCore.MIT.Smoke.EFCore110", "test\EntityFrameworkPlus.EFCore.MIT.Smoke.EFCore110\EntityFrameworkPlus.EFCore.MIT.Smoke.EFCore110.csproj", "{D0BBD2D3-9312-412A-BC71-47DFC8F10044}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -199,6 +205,18 @@ Global
 		{958551B0-2B7C-4FB4-8E84-EE63754B555E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{958551B0-2B7C-4FB4-8E84-EE63754B555E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{958551B0-2B7C-4FB4-8E84-EE63754B555E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C18526BF-6740-4508-9C39-227CCDF76A26}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C18526BF-6740-4508-9C39-227CCDF76A26}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C18526BF-6740-4508-9C39-227CCDF76A26}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C18526BF-6740-4508-9C39-227CCDF76A26}.Release|Any CPU.Build.0 = Release|Any CPU
+		{14D36099-AAED-4BC8-B12A-7072C7F613DC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{14D36099-AAED-4BC8-B12A-7072C7F613DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{14D36099-AAED-4BC8-B12A-7072C7F613DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{14D36099-AAED-4BC8-B12A-7072C7F613DC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D0BBD2D3-9312-412A-BC71-47DFC8F10044}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D0BBD2D3-9312-412A-BC71-47DFC8F10044}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D0BBD2D3-9312-412A-BC71-47DFC8F10044}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D0BBD2D3-9312-412A-BC71-47DFC8F10044}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -232,11 +250,15 @@ Global
 		{DB1D9715-C703-4F6D-BF3B-16F0228F3A60} = {14D8985E-0AA8-444A-A32E-D766ABA114D6}
 		{831BE291-5EFF-4665-B364-6D7B289F4E4A} = {45D50C58-9B18-475A-9839-D6754E87352B}
 		{7F966A0F-4B95-4740-A28E-61B344EF6C90} = {14D8985E-0AA8-444A-A32E-D766ABA114D6}
+		{14D36099-AAED-4BC8-B12A-7072C7F613DC} = {14D8985E-0AA8-444A-A32E-D766ABA114D6}
+		{D0BBD2D3-9312-412A-BC71-47DFC8F10044} = {14D8985E-0AA8-444A-A32E-D766ABA114D6}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {AEE441E3-DEE9-48F2-9212-1F3A573007AE}
 	EndGlobalSection
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		shared\Z.EF.Plus.MIT.Shared\Z.EF.Plus.MIT.Shared.projitems*{c18526bf-6740-4508-9c39-227ccdf76a26}*SharedItemsImports = 5
+		test\EntityFrameworkPlus.EFCore.MIT.Smoke.Shared\EntityFrameworkPlus.EFCore.MIT.Smoke.Shared.projitems*{d0bbd2d3-9312-412a-bc71-47dfc8f10044}*SharedItemsImports = 5
 		shared\Z.EF.Plus.MIT.Shared\Z.EF.Plus.MIT.Shared.projitems*{4edee6e6-27a0-4793-9650-865445b367d5}*SharedItemsImports = 5
 		shared\Z.EF.Plus.MIT.Shared\Z.EF.Plus.MIT.Shared.projitems*{831be291-5eff-4665-b364-6d7b289f4e4a}*SharedItemsImports = 13
 		test\EntityFrameworkPlus.EFCore.MIT.Smoke.Shared\EntityFrameworkPlus.EFCore.MIT.Smoke.Shared.projitems*{958551b0-2b7c-4fb4-8e84-ee63754b555e}*SharedItemsImports = 5
