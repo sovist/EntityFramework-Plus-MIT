@@ -85,7 +85,8 @@ suffix follows once a real application has run on the last preview. Every publis
   a statement would leave it: tracked instances keep their values, pending changes stay pending, nothing new
   is tracked. That second context is built from your context's type and options. If your context needs
   more than its options, set `Z.EntityFramework.Extensions.EntityFrameworkManager.ContextFactory`, the same
-  hook EF Extensions used.
+  hook EF Extensions used. The context you return stays yours: it is not disposed, and handing out the same
+  instance on every call is fine.
 - As upstream: only Query Future is truly asynchronous. The async methods of Query Cache, Query Deferred
   (`ExecuteAsync`), IncludeFilter and IncludeOptimized run the synchronous code on a thread-pool thread.
 - Like upstream, the library relies on EF Core internals. Every release is verified against upstream's own

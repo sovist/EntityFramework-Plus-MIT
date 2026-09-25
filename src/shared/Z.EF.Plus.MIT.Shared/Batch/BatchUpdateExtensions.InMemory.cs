@@ -49,7 +49,7 @@ namespace Z.EntityFramework.Plus
         /// members the factory assigns as modified - the same object initializer the statement path
         /// translates, so both paths set the same members and nothing else.
         /// </summary>
-        private static void StageUpdate<T>(DbContext context, ICollection<T> entities, Expression<Func<T, T>> updateFactory)
+        private static void StageUpdate<T>(InMemoryContext context, ICollection<T> entities, Expression<Func<T, T>> updateFactory)
             where T : class
         {
             if (entities.Count == 0)
@@ -64,9 +64,7 @@ namespace Z.EntityFramework.Plus
             {
                 var updated = factory(entity);
 
-                // Entry(...).State attaches the row alone; Attach and Update would walk its navigations too.
-                var entry = context.Entry(entity);
-                entry.State = EntityState.Unchanged;
+                var entry = context.Attach(entity, EntityState.Unchanged);
 
                 foreach (var member in members)
                 {

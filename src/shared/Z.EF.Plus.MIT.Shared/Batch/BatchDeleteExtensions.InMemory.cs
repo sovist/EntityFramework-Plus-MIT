@@ -41,13 +41,12 @@ namespace Z.EntityFramework.Plus
             }
         }
 
-        private static void StageDelete<T>(DbContext context, IEnumerable<T> entities)
+        private static void StageDelete<T>(InMemoryContext context, IEnumerable<T> entities)
             where T : class
         {
             foreach (var entity in entities)
             {
-                // Entry(...).State attaches the row alone; Remove would walk its navigations too.
-                context.Entry(entity).State = EntityState.Deleted;
+                context.Attach(entity, EntityState.Deleted);
             }
         }
     }
