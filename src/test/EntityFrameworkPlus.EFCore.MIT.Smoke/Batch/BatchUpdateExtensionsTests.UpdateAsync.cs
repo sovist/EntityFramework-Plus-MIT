@@ -193,12 +193,15 @@ namespace EntityFrameworkPlus.EFCore.MIT.Smoke.Batch
             using var context = database.CreateContext();
             var seen = new ConcurrentBag<DbContext>();
 
-            // The factory stays valid for any context that calls it while it is set: test classes run in parallel.
+            // Test classes run in parallel, so while the factory is set it must stay valid for any context that
+            // calls it: a sibling for its own context type, null (the default path) for every other.
             EntityFrameworkManager.ContextFactory = current =>
             {
                 seen.Add(current);
 
-                return new ItemsDbContext((DbContextOptions<ItemsDbContext>)current.GetService<IDbContextOptions>());
+                return current is ItemsDbContext
+                    ? new ItemsDbContext((DbContextOptions<ItemsDbContext>)current.GetService<IDbContextOptions>())
+                    : null;
             };
 
             try
@@ -219,6 +222,68 @@ namespace EntityFrameworkPlus.EFCore.MIT.Smoke.Batch
             {
                 EntityFrameworkManager.ContextFactory = null;
             }
+        }
+
+        [Fact]
+        public async Task UpdateAsync_ShouldThrow_When_ContextFactoryReturnsTheQueryContext()
+        {
+            using var database = await TestDatabase.Create(Provider.InMemory, Items());
+            using var context = database.CreateContext();
+
+            // Misbehaves for this test's context only; any other caller gets the default path.
+            EntityFrameworkManager.ContextFactory = current => ReferenceEquals(current, context) ? current : null;
+
+            try
+            {
+                // Act
+                var exception = await Should.ThrowAsync<InvalidOperationException>(
+                    () => context.Items.UpdateAsync(_ => new Item { BufferId = null }));
+
+                // Assert
+                exception.Message.ShouldContain("query's own context");
+
+                (await database.LoadItems()).ShouldBeInOrder(_ => _.BufferId, 10, 10, 20);
+            }
+            finally
+            {
+                EntityFrameworkManager.ContextFactory = null;
+            }
+        }
+
+        [Fact]
+        public async Task UpdateAsync_ShouldThrow_When_ContextHasNoOptionsConstructor_And_NoContextFactory()
+        {
+            var options = new DbContextOptionsBuilder<ItemsDbContextNeedingMore>()
+                .UseInMemoryDatabase($"batch:{Guid.NewGuid()}")
+                .Options;
+
+            using var context = new ItemsDbContextNeedingMore(options, owner: nameof(BatchUpdateExtensionsTests));
+            context.Items.AddRange(Items());
+            await context.SaveChangesAsync();
+            context.ChangeTracker.Clear();
+
+            // Act
+            var exception = await Should.ThrowAsync<InvalidOperationException>(
+                () => context.Items.UpdateAsync(_ => new Item { BufferId = null }));
+
+            // Assert
+            exception.Message.ShouldContain(nameof(ItemsDbContextNeedingMore));
+
+            exception.Message.ShouldContain("ContextFactory");
+        }
+
+        /// <summary>A context the fallback cannot build from options alone, which is what the hook is for.</summary>
+        private sealed class ItemsDbContextNeedingMore : DbContext
+        {
+            public ItemsDbContextNeedingMore(DbContextOptions<ItemsDbContextNeedingMore> options, string owner)
+                : base(options)
+            {
+                Owner = owner;
+            }
+
+            public string Owner { get; }
+
+            public DbSet<Item> Items => Set<Item>();
         }
     }
 }

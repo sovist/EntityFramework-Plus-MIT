@@ -313,19 +313,27 @@ What the two test projects prove, at `10.105.8.1` on EF Core 10.0.3:
   `ExecuteUpdate` / `ExecuteDelete` implementation; the 25 files bound to EFE options are excluded.
   Audit contributes nothing on EF Core in upstream's suite either (106 of its 126 test files are
   `#if EF5 || EF6`).
-- **Smoke** (43 tests). Query Future (8): two entity futures + `DeferredCount` + `DeferredFirstOrDefault`
+- **Smoke** (45 tests). Query Future (8): two entity futures + `DeferredCount` + `DeferredFirstOrDefault`
   in **one server round trip** (`SqlConnection.RetrieveStatistics`), with and without
   `EnableRetryOnFailure` — the buffering case is the one that justifies the compile step; an `Include`
   graph; two queries whose EF parameters have the same name but different values (exercises
   `GetParameterName`); a global query filter reading a context property (runtime parameters); the sync
-  path; `FromCache` hitting the cache; and the InMemory provider (non-batched path). Batch (35: 17
+  path; `FromCache` hitting the cache; and the InMemory provider (non-batched path). Batch (37: 17
   theories × InMemory and SQLite, so the statement path and the fallback path answer the same
-  assertions, plus one InMemory fact): assigned members set; a constant into a nullable member (the
+  assertions, plus three InMemory facts): assigned members set; a constant into a nullable member (the
   efcore#37974 case); a value reading its own row; rows reached through a join; zero matches; persisted
   without `SaveChanges` while loading nothing into the context; a tracked instance left unchanged when
   its row is updated or deleted; the unit of work's other pending changes left unsaved; the sync
-  overloads; a non-initializer factory rejected; and the `ContextFactory` hook being the context saved
-  through.
+  overloads; a non-initializer factory rejected; the `ContextFactory` hook being the context saved
+  through; and both ways the second context cannot be had — the hook returning the query's own context,
+  and a context type the default cannot construct with no hook set.
+
+Line coverage of the fork-owned code (`Batch\`, `Shim\`), both suites merged, is 93%: 278 of 299 lines.
+Uncovered: the two `IsCommunity` setters nothing calls, `PublicMethods.GetDatabase` and the `@_` branch of
+`GetParameterName` (paths upstream no longer reaches on EF Core 10), the `FieldInfo` branches of the
+update factory (no test entity maps a field), and `ToZInfo` for Set Identity, which neither suite
+exercises. Collect it with `dotnet test … --collect "Code Coverage;Format=Cobertura"`; no extra package is
+needed, `Microsoft.NET.Test.Sdk` carries the collector.
 
 Package check after `dotnet pack`: the nuspec's only dependency is `Microsoft.EntityFrameworkCore.Relational`,
 `lib/net10.0/` holds `EntityFrameworkPlus.EFCore.MIT.dll` + `.xml`, `LICENSE` is at the root, and the
