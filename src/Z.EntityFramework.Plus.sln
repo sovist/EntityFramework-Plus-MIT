@@ -87,7 +87,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Z.EntityFramework.Plus.EFCo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Z.Test.EntityFramework.Plus.EFCore100", "test\Z.Test.EntityFramework.Plus.EFCore100\Z.Test.EntityFramework.Plus.EFCore100.csproj", "{E05FECB0-4B8F-46BD-B9BE-DA07FAABEF87}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EntityFrameworkPlus.EFCore.MIT.Smoke", "test\EntityFrameworkPlus.EFCore.MIT.Smoke\EntityFrameworkPlus.EFCore.MIT.Smoke.csproj", "{958551B0-2B7C-4FB4-8E84-EE63754B555E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EntityFrameworkPlus.EFCore.MIT.Smoke.EFCore100", "test\EntityFrameworkPlus.EFCore.MIT.Smoke.EFCore100\EntityFrameworkPlus.EFCore.MIT.Smoke.EFCore100.csproj", "{958551B0-2B7C-4FB4-8E84-EE63754B555E}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Z.EF.Plus.MIT.Shared", "shared\Z.EF.Plus.MIT.Shared\Z.EF.Plus.MIT.Shared.shproj", "{831BE291-5EFF-4665-B364-6D7B289F4E4A}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "EntityFrameworkPlus.EFCore.MIT.Smoke.Shared", "test\EntityFrameworkPlus.EFCore.MIT.Smoke.Shared\EntityFrameworkPlus.EFCore.MIT.Smoke.Shared.shproj", "{7F966A0F-4B95-4740-A28E-61B344EF6C90}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -226,11 +230,17 @@ Global
 		{3DC354A7-ED8E-8A7E-7D56-CCEBD075B24B} = {14D8985E-0AA8-444A-A32E-D766ABA114D6}
 		{A287860E-A64B-AA50-F418-D011CD4CA8B0} = {14D8985E-0AA8-444A-A32E-D766ABA114D6}
 		{DB1D9715-C703-4F6D-BF3B-16F0228F3A60} = {14D8985E-0AA8-444A-A32E-D766ABA114D6}
+		{831BE291-5EFF-4665-B364-6D7B289F4E4A} = {45D50C58-9B18-475A-9839-D6754E87352B}
+		{7F966A0F-4B95-4740-A28E-61B344EF6C90} = {14D8985E-0AA8-444A-A32E-D766ABA114D6}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {AEE441E3-DEE9-48F2-9212-1F3A573007AE}
 	EndGlobalSection
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		shared\Z.EF.Plus.MIT.Shared\Z.EF.Plus.MIT.Shared.projitems*{4edee6e6-27a0-4793-9650-865445b367d5}*SharedItemsImports = 5
+		shared\Z.EF.Plus.MIT.Shared\Z.EF.Plus.MIT.Shared.projitems*{831be291-5eff-4665-b364-6d7b289f4e4a}*SharedItemsImports = 13
+		test\EntityFrameworkPlus.EFCore.MIT.Smoke.Shared\EntityFrameworkPlus.EFCore.MIT.Smoke.Shared.projitems*{958551b0-2b7c-4fb4-8e84-ee63754b555e}*SharedItemsImports = 5
+		test\EntityFrameworkPlus.EFCore.MIT.Smoke.Shared\EntityFrameworkPlus.EFCore.MIT.Smoke.Shared.projitems*{7f966a0f-4b95-4740-a28e-61b344ef6c90}*SharedItemsImports = 13
 		test\Z.Test.EntityFramework.Plus.EF6.Shared\Z.Test.EntityFramework.Plus.EF6.Shared.projitems*{063fa382-dfda-4bcb-bbb6-aac04d0ed88e}*SharedItemsImports = 4
 		test\Z.Test.EntityFramework.Plus.Test.Shared\Z.Test.EntityFramework.Plus.Test.Shared.projitems*{063fa382-dfda-4bcb-bbb6-aac04d0ed88e}*SharedItemsImports = 4
 		shared\Z.EF.Plus.Audit.Shared\Z.EF.Plus.Audit.Shared.projitems*{1b28efb7-e679-4275-aca9-da7cd589a56a}*SharedItemsImports = 4

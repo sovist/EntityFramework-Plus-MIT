@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="SharedProjectFile_SccProperties">
+    <SharedProjectFile_ProjectGuid>{44d18132-b8db-44d5-aa64-551c7d38f1ba}</SharedProjectFile_ProjectGuid>
+    <SharedProjectFile_SccProjectName></SharedProjectFile_SccProjectName>
+    <SharedProjectFile_SccAuxPath></SharedProjectFile_SccAuxPath>
+    <SharedProjectFile_SccLocalPath></SharedProjectFile_SccLocalPath>
+    <SharedProjectFile_SccProvider></SharedProjectFile_SccProvider>
+  </PropertyGroup>
+  <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <SharedGUID>831be291-5eff-4665-b364-6d7b289f4e4a</SharedGUID>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <Import_RootNamespace>Z.EF.Plus.MIT.Shared</Import_RootNamespace>
+  </PropertyGroup>
+  <!--
+    The fork's own code, imported by every EFCore1Nx project the way upstream's feature folders are:
+    Shim\ stands in for the Z.EntityFramework.Extensions / Z.Expressions.Eval surface upstream calls,
+    Batch\ is Batch Update / Delete on ExecuteUpdate / ExecuteDelete. Version drift goes behind
+    EFCORE_xX symbols here, as in upstream's shared code.
+  -->
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)Batch\BatchDeleteExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Batch\BatchDeleteExtensions.InMemory.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Batch\BatchUpdateExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Batch\BatchUpdateExtensions.InMemory.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Batch\InMemoryContext.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Shim\EntityTypeInfoExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Shim\EvalManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Shim\Extensions\EntityFrameworkManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Shim\Extensions\PublicExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Shim\Extensions\PublicMethods.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Shim\Extensions\QueryCommandExtensions.cs" />
+  </ItemGroup>
+</Project>
