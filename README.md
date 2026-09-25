@@ -65,8 +65,11 @@ For everything else, upstream's documentation applies unchanged: https://entityf
 
 ## Versions
 
-The package version mirrors the upstream tag it is built from: `10.105.8.1` is upstream `10.105.8.1`
-compiled for EF Core 10. As in upstream's own scheme, the first component is the EF Core major version.
+The package version is the upstream tag it is built from, so the version alone tells you which Entity Framework Plus release you are on.
+As in upstream's own scheme, the first component is the EF Core major version.
+A `-preview.N` suffix marks this build's own iterations on one upstream tag; the version without a
+suffix follows once a real application has run on the last preview. Every published version has a
+`mit/<version>` tag in this repository, and the package's version history on nuget.org lists what is available.
 
 ## Differences from upstream
 

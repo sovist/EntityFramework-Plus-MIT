@@ -392,13 +392,14 @@ ours and prefer theirs.
   version alone.
 - Upstream uses four components (`10.105.8.1`), which leaves no room for a fork-only patch number.
   Policy: a fork-only fix waits for the next upstream release. If one cannot wait, bump the fourth
-  component and record the mapping in the release table below.
+  component and record the mapping in this section.
 - Git tags are `mit/<version>`, so they never collide with upstream's bare `<version>` tags (those
   are fetched into local clones from `upstream` but never pushed to this repository).
 
-| `.MIT` version | Upstream tag | Notes |
-|---|---|---|
-| — | — | no release yet |
+The record of published versions is the `mit/*` tags here and the version history on nuget.org; each
+tag points at the `master-MIT` commit the package was built from, and the History section below says
+what changed. A fork-only bump of the fourth component, should one ever happen, gets a note in this
+section with the upstream tag it maps to.
 
 ## Known caveats
 
