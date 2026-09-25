@@ -1,9 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <!--
-    Smoke test for the MIT build: proves Query Future still combines queries into one round trip, with
-    entity graphs, scalar futures, parameter renaming, global-filter runtime parameters and a buffering
-    (retrying) execution strategy, on SQL Server and on the InMemory provider.
+    Smoke tests for the MIT build: Query Future still combines queries into one round trip, with entity
+    graphs, scalar futures, parameter renaming, global-filter runtime parameters and a buffering (retrying)
+    execution strategy, on SQL Server and on the InMemory provider; 
+    Batch Update / Delete behave the same on SQLite (ExecuteUpdate / ExecuteDelete) and on InMemory (the load-and-save fallback).
   -->
 
   <PropertyGroup>
@@ -17,6 +18,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.3" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.3" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.3" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageReference Include="Shouldly" Version="4.3.0" />
     <PackageReference Include="xunit" Version="2.9.3" />

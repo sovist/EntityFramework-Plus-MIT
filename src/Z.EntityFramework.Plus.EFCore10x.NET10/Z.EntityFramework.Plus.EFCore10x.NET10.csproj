@@ -25,16 +25,16 @@
     <Authors>ZZZ Projects Inc.;Oleksandr Semeniuk</Authors>
     <Product>EntityFrameworkPlus.EFCore.MIT</Product>
     <Copyright>Copyright © ZZZ Projects Inc.</Copyright>
-    <Description>MIT build of Entity Framework Plus for EF Core 10 without the proprietary Z.EntityFramework.Extensions and Z.Expressions.Eval dependencies. Includes Query Future, Query Deferred, Query Cache, Query Filter, Audit, Query IncludeFilter and Query IncludeOptimized. Batch Update/Delete are not included because they require Z.EntityFramework.Extensions; use EF Core's ExecuteUpdate/ExecuteDelete instead. Not affiliated with ZZZ Projects.</Description>
+    <Description>MIT build of Entity Framework Plus for EF Core 10 without the proprietary Z.EntityFramework.Extensions and Z.Expressions.Eval dependencies. Includes Query Future, Query Deferred, Query Cache, Query Filter, Audit, Query IncludeFilter, Query IncludeOptimized, and Batch Update/Delete reimplemented on EF Core's ExecuteUpdate/ExecuteDelete (object-initializer form). Not affiliated with ZZZ Projects.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/sovist/EntityFramework-Plus-MIT</PackageProjectUrl>
     <RepositoryUrl>https://github.com/sovist/EntityFramework-Plus-MIT</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageTags>EntityFramework;EntityFrameworkCore;EFCore;EF;Plus;QueryFuture;Future;QueryDeferred;QueryCache;QueryFilter;Audit;MIT</PackageTags>
+    <PackageTags>EntityFramework;EntityFrameworkCore;EFCore;EF;Plus;QueryFuture;Future;QueryDeferred;QueryCache;QueryFilter;BatchUpdate;BatchDelete;Audit;MIT</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
-  <!-- Upstream shared code. Same list as the 9x project minus BatchDelete, BatchUpdate and QueryHook, which are facades over Z.EntityFramework.Extensions. -->
+  <!-- Upstream shared code. Same list as the 9x project minus BatchDelete and BatchUpdate (facades over Z.EntityFramework.Extensions, reimplemented in Batch\) and QueryHook (facade, dropped). -->
   <Import Project="..\shared\Z.EF.Plus._Core.Shared\Z.EF.Plus._Core.Shared.projitems" Label="Shared" />
   <Import Project="..\shared\Z.EF.Plus._ExceptionMessage.Shared\Z.EF.Plus._ExceptionMessage.Shared.projitems" Label="Shared" />
   <Import Project="..\shared\Z.EF.Plus.Audit.Shared\Z.EF.Plus.Audit.Shared.projitems" Label="Shared" />
@@ -48,7 +48,7 @@
   <Import Project="..\shared\Z.EF.Plus.SetDynamic.Shared\Z.EF.Plus.SetDynamic.Shared.projitems" Label="Shared" />
   <Import Project="..\shared\Z.EF.Plus.SetIdentity.Shared\Z.EF.Plus.SetIdentity.Shared.projitems" Label="Shared" />
 
-  <!-- Shim\*.cs (the replacement for the paid-assembly surface) is picked up by the SDK's default globbing. -->
+  <!-- Shim\**\*.cs (the replacement for the paid-assembly surface) and Batch\**\*.cs (Batch Update/Delete on ExecuteUpdate/ExecuteDelete) are picked up by the SDK's default globbing. -->
 
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.0" />
