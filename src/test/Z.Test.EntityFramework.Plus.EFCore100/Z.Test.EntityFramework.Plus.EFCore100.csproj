@@ -38,10 +38,37 @@
   <Import Project="..\Z.Test.EntityFramework.Plus.Test.Shared\Z.Test.EntityFramework.Plus.Test.Shared.projitems" Label="Shared" />
 
   <ItemGroup>
-    <!-- Batch Update/Delete are not part of the MIT build: their tests, and the repro files that call Z.EntityFramework.Extensions directly, are excluded. -->
-    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchDelete\**" />
-    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchUpdate\**" />
-    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\MikaelAreaIndependant\IncludeFilter_694.cs" />
+    <!--
+      Batch Update/Delete come from this build's own EF Core implementation: the object-initializer form, no options builder. 
+      The upstream tests below exercise Z.EntityFramework.Extensions-only behaviour (BatchSize, BatchDelayInterval, Executing, InMemoryDbContextFactory, Skip/Take visitors) and stay out,
+      every other upstream batch test runs against this build.
+    -->
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchDelete\BatchDelayInterval\Default.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchDelete\BatchDelayInterval\FiftyMilliseconds.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchDelete\BatchDelete_BatchSize.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchDelete\BatchSize\Default.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchDelete\BatchSize\One.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchDelete\BatchSize\Ten.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchDelete\BatchSize\Zero.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchDelete\Executing\Template.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchDelete\Executing\WhileDelayTemplate.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchDelete\Executing\WhileTemplate.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchDelete\InMemory\Ten.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchDelete\InMemory\Thirty.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchDelete\InMemory\Twenty.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchDelete\Visitor\Skip.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchDelete\Visitor\Take.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchUpdate\BatchDelayInterval\Default.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchUpdate\BatchDelayInterval\FiftyMilliseconds.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchUpdate\BatchSize\Default.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchUpdate\BatchSize\One.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchUpdate\BatchSize\Ten.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchUpdate\BatchSize\Zero.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchUpdate\BatchUpdate_BatchSize.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchUpdate\Executing\Template.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchUpdate\Executing\WhileDelayTemplate.cs" />
+    <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\BatchUpdate\Executing\WhileTemplate.cs" />
+    <!-- These call Z.EntityFramework.Extensions directly (UpdateFromQuery, BulkInsert). -->
     <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\MikaelAreaIndependant\QueryCache.cs" />
     <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\MikaelAreaIndependant\Autre.cs" />
     <Compile Remove="..\..\Z.Test.EntityFramework.Plus.EFCore.Shared\MikaelAreaIndependant\UpdateFromQueryDic.cs" />
