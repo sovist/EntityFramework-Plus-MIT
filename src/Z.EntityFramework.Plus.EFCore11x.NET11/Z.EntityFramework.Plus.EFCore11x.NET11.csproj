@@ -52,7 +52,7 @@
   <Import Project="..\shared\Z.EF.Plus.MIT.Shared\Z.EF.Plus.MIT.Shared.projitems" Label="Shared" />
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="11.0.0-rc.1.26425.128" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="11.0.0" />
   </ItemGroup>
 
   <ItemGroup>
