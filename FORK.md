@@ -137,7 +137,7 @@ Two `[Experimental]` members are used with `EF9100` suppressed, because EF's own
 calls exactly these two: `ILiftableConstantProcessor.InlineConstants` and
 `QueryCompilationContext.SupportsPrecompiledQuery`.
 
-All fields exist in EF Core 10.0.x and 11.0 RC 1. A renamed field surfaces as a `TypeInitializationException`
+All fields exist in EF Core 10.0.x and 11.0.x. A renamed field surfaces as a `TypeInitializationException`
 wrapping `MissingFieldException` on the first use — not at compile time. The test projects are what
 catch it on an EF Core bump.
 
@@ -283,8 +283,8 @@ The library csproj mirrors `Z.EntityFramework.Plus.EFCore9x.NET8.csproj` with th
 | `NoWarn` | — | `CS1591` (upstream XML docs are incomplete), `EF1001` (upstream reflects EF internals by design) |
 | `SignAssembly` | `False` | `False` (no key needed) |
 
-The 11x csproj is the 10x one with `net11.0`, `Microsoft.EntityFrameworkCore.Relational` 11 (the release
-candidate until EF Core 11 ships), `EFCORE_11X` appended to the symbols and `<Version>11.105.8.1</Version>`:
+The 11x csproj is the 10x one with `net11.0`, `Microsoft.EntityFrameworkCore.Relational` 11.0.0,
+`EFCORE_11X` appended to the symbols and `<Version>11.105.8.1</Version>`:
 the first component of the package version is the EF Core major, as in upstream's own `9.x` / `10.x` pairs,
 so both projects share the package id and differ in version. Everything they compile is the shared code.
 
@@ -317,7 +317,7 @@ arrives.
 
 ## Build, verify, publish
 
-Prerequisites: .NET SDKs 10.0.x and 11.0.x (the release candidate until EF Core 11 ships); a local
+Prerequisites: .NET SDKs 10.0.x and 11.0.x; a local
 trusted SQL Server (`localhost`). The test projects create their own databases: upstream's suite uses
 `Z.Test.EntityFramework.Plus.EFCore` (hard-coded upstream, so the EF Core 10 and 11 runs must not overlap),
 the smoke fixture `EFPlusMitSmoke<EF major>`; the smoke connection string can be overridden with
@@ -336,7 +336,7 @@ dotnet test  src/EntityFrameworkPlus.EFCore.MIT.EFCore11.slnf -c Release   # aft
 dotnet pack  src/Z.EntityFramework.Plus.EFCore10x.NET10 -c Release          # → bin/Release/*.nupkg; EFCore11x.NET11 likewise
 ```
 
-What the two test projects prove, at `10.105.8.1` on EF Core 10.0.3, and with the same numbers on EF Core 11 RC 1:
+What the two test projects prove, at `10.105.8.1` on EF Core 10.0.3, and with the same numbers on EF Core 11.0.0:
 
 - **Upstream suite** (270 tests): QueryFilter 79, QueryIncludeOptimized 44, QueryIncludeFilter 38,
   BatchUpdate 31, QueryCache 25, BatchDelete 18, QueryFuture 7, QueryDeferred 2, upstream repro cases 26.
@@ -379,7 +379,7 @@ Two GitHub Actions workflows in `.github/workflows/`, both on `windows-latest` w
 installed by `Potatoqualitee/mssqlsuite` (upstream's suite needs `localhost` + Windows authentication):
 
 - **`build.yml`** — on pushes to `master-MIT` and `features/**`, and PRs to `master-MIT`: with both SDKs
-  installed (`11.0.x` at preview quality while EF Core 11 is a release candidate), build and test the
+  installed, build and test the
   EF Core 10 filter, then the EF Core 11 one, pack both libraries, upload the `.nupkg`s as one artifact.
 - **`publish.yml`** — on a pushed tag `mit/<version>` (or `workflow_dispatch` with a version): the
   version's first component picks the project and filter (`10.*` → `EFCore10x.NET10`, `11.*` →
@@ -487,8 +487,7 @@ section with the upstream tag it maps to.
 Open:
 
 1. **nuget.org co-owner** for the package, so it does not depend on one account.
-2. **Additional targets** (EF Core 8/9): not planned. EF Core 11 is built and tested from RC 1 on;
-   publishing `11.x` waits for EF Core 11 to ship, or for a consumer on .NET 11, whichever comes first.
+2. **Additional targets** (EF Core 8/9): not planned.
 
 ## History
 
@@ -525,3 +524,6 @@ Open:
   solution filter and one CI pass per version, `publish.yml` picking the project by the version's major.
   One `#if EFCORE_11X` (`ExtractParameters`); everything else compiled and passed unchanged: upstream
   270/270, smoke 47/47 on EF Core 11 RC 1, the same on EF Core 10.
+- 2026-11-10 — EF Core 11 shipped: the 11x library and both `EFCore110` test projects moved from RC 1
+  to `11.0.0`, and CI installs the GA `11.0.x` SDK. Upstream 270/270, smoke 47/47 on EF Core 11.0.0.
+  Released as `mit/11.105.8.1`.
